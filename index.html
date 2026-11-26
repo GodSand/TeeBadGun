@@ -263,13 +263,14 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
 const KEY='badpair-v1';
 // Firebase สำหรับแชร์ให้คนอื่นดู (ค่า apiKey เปิดเผยได้ ความปลอดภัยอยู่ที่ Rules ของฐานข้อมูล)
 const FB={apiKey:"AIzaSyAVlQLpNc0z44pmZvCvwPWt87RaHFGuKvQ",authDomain:"godsandteebadgun.firebaseapp.com",databaseURL:"https://godsandteebadgun-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"godsandteebadgun",storageBucket:"godsandteebadgun.firebasestorage.app",messagingSenderId:"721004259215",appId:"1:721004259215:web:8f1ab2acfdede1cb8f0dfa"};
+const APP_URL='https://godsand.github.io/TeeBadGun/';
 const VKEY=KEY+'-view';
 let VIEW=null;try{VIEW=new URLSearchParams(location.search).get('view');if(VIEW)localStorage.setItem(VKEY,VIEW);else VIEW=localStorage.getItem(VKEY)}catch(e){}
 if(VIEW&&!/^[a-z0-9]{6,40}$/.test(VIEW))VIEW=null;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 let S,undo=[],addG='A',editId=null,mfn=null,tt=null;
-const blank=()=>({players:[],courts:[],history:[],clock:1,seq:1,tab:'courts',settings:{mode:'king',maxWins:2,courts:2,balance:true,sameDiff:5,timeWarn:15,scoreMode:'points',topPts:10,minusMax:5,minG:3},sessions:[],shTotal:0});
+const blank=()=>({players:[],courts:[],history:[],clock:1,seq:1,tab:'courts',settings:{mode:'king',maxWins:2,courts:2,balance:true,sameDiff:4,timeWarn:15,scoreMode:'points',topPts:10,minusMax:5,minG:3},sessions:[],shTotal:0});
 function addP(s,name,g){s.players.push({id:s.seq++,name,g,active:true,games:0,wins:0,lp:null,lo:[],par:{},opp:{},q:s.clock++})}
 function sample(){const s=blank();['ต้น','บอย','เอ็ม','ปอนด์','กอล์ฟ','บีม','โอ๊ต'].forEach(n=>addP(s,n,'A'));['มิ้นท์','แพร','ฝน','นุ่น','จูน'].forEach(n=>addP(s,n,'B'));s.sample=true;return s}
 // ก๊วน: แต่ละก๊วนเก็บข้อมูลแยกกันทั้งหมด (ผู้เล่น สกอร์ คะแนน การตั้งค่า)
@@ -306,8 +307,8 @@ function oppCost(t1,t2){let c=0;for(const a of t1)for(const b of t2){c+=(a.opp[b
 const bal=(t1,t2)=>S.settings.balance?Math.abs(rate(t1[0])+rate(t1[1])-rate(t2[0])-rate(t2[1]))*25:0;
 const SPL=[[0,1,2,3],[0,2,1,3],[0,3,1,2]];
 const cnt=g=>S.players.filter(p=>p.active&&p.g===g).length;
-// ข้อ 2: AA vs AA / BB vs BB ได้เฉพาะเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ sameDiff คน
-function sameOK(){const d=cnt('A')-cnt('B'),th=S.settings.sameDiff;return d>=th?'AA':-d>=th?'BB':null}
+// ข้อ 2: AA vs AA / BB vs BB ได้เฉพาะเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ 4 คน (คงที่)
+function sameOK(){const d=cnt('A')-cnt('B'),th=4;return d>=th?'AA':-d>=th?'BB':null}
 function pool(){const q=queue(),out=q.slice(0,8);for(const g of ['A','B'])out.push(...q.filter(p=>p.g===g&&!out.includes(p)).slice(0,4));
   return out.map(p=>({p,r:q.indexOf(p)})).sort((a,b)=>a.r-b.r)}
 function bestMatch(){const q=pool(),n=q.length,same=sameOK();let best=null;
@@ -340,7 +341,7 @@ function record(ci,k){snap();const c=S.courts[ci],T=[c.t1,c.t2],W=T[k].map(P),L=
   const streak=c.stay===k?c.streak+1:1,king=S.settings.mode==='king';
   S.history.unshift({n:S.history.length+1,c:c.no,sh:gsh,d:c.start?Date.now()-c.start:0,w:W.map(p=>p.name),l:L.map(p=>p.name),st:king?streak:0});
   let msg;
-  if(king&&streak<S.settings.maxWins){
+  if(king&&streak<2){
     clearC(c);toQueue(L.map(p=>p.id));const ch=bestChallenger(W);
     if(ch){c.t1=W.map(p=>p.id);c.t2=ch.t.map(p=>p.id);c.stay=0;c.streak=streak;c.start=Date.now();msg=`ผู้ชนะอยู่ต่อ (ชนะติด ${streak}) ผู้แพ้ไปท้ายคิว`}
     else{toQueue(W.map(p=>p.id));fill(c);msg='ไม่มีคู่ท้าชิงกลุ่มตรงกัน จึงจัดใหม่ทั้งสนาม'}
@@ -364,18 +365,18 @@ function chip(p,rk){if(!p)return '';if(rk===undefined)rk=TOP[p.id]||0;const hot=
   return `<span class="nm${rk?' rk'+rk:''}${hot?' fire':''}"${t?` title="${t}"`:''}><i class="g ${p.g}">${p.g}${rk?CROWN:''}</i><span class="tx">${esc(p.name)}</span>${rk===1?'<b class="spk" aria-hidden="true">✦</b>':''}${hot?`<b class="fb" title="ชนะติด ${n} เกม">${FLAME}${n}</b>`:''}</span>`}
 const SHI='<svg class="shi" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="20" r="4.5" fill="#ffd84d" stroke="#111" stroke-width="1.2"/><path d="M8.5 17.5 4 4h18l-4.5 13.5z" fill="#fff" stroke="#111" stroke-width="1.2"/><path d="M9.5 6l3 11M13 5v12M16.5 6l-3 11" stroke="#111" stroke-width="1"/></svg>';
 const shRow=(c,i)=>`<div class="shrow"><span class="shc">${SHI}<b>${c.sh||0}</b> ลูก${c.t1?'เกมนี้':' (รอเกมถัดไป)'}</span><button class="mini" data-act="shm" data-c="${i}" ${c.sh>0?'':'disabled'} aria-label="ลดลูกแบด">−</button><button class="btn shp" data-act="shp" data-c="${i}">+ ลูกแบด</button></div>`;
-function courtHTML(c,i){const king=S.settings.mode==='king',max=S.settings.maxWins;
+function courtHTML(c,i){const king=S.settings.mode==='king',max=2;
   if(!c.t1){const ok=!!bestMatch();return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">ว่าง</span></header><div class="floor idle"><button class="btn light" data-act="fill" data-c="${i}" ${ok?'':'disabled'}>${ok?'จัดคู่ลงสนาม':'คนรอไม่พอ หรือกลุ่มยังไม่ลงตัว'}</button></div>${shRow(c,i)}</article>`}
   const side=(t,k)=>`<button class="side" data-act="win" data-c="${i}" data-k="${k}">${king&&c.stay===k?`<span class="crown">ชนะติด ${c.streak}/${max}</span>`:''}${t.map(id=>chip(P(id))).join('')}<span class="hint">แตะเมื่อฝั่งนี้ชนะ</span></button>`;
   return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">${typ(c.t1.map(P))} vs ${typ(c.t2.map(P))}</span><button class="link" data-act="cancel" data-c="${i}">ยกเลิกเกม</button></header><div class="floor"><button class="timer" data-act="treset" data-c="${i}" aria-label="เวลาที่เล่นไป แตะเพื่อเริ่มนับใหม่"><span class="tm" data-s="${c.start||Date.now()}">${fmt(Date.now()-(c.start||Date.now()))}</span></button>${side(c.t1,0)}<div class="net"></div>${side(c.t2,1)}</div>${shRow(c,i)}</article>`}
 function vCourts(){const q=queue(),king=S.settings.mode==='king';
-  return `<section class="band"><h1>สนาม</h1><p class="sub">${S.players.filter(p=>p.active).length} คนมาเล่น · รอ ${q.length} คน · ${king?`แพ้ออก (ชนะติด ${S.settings.maxWins} ออกทั้งคู่)`:'เล่น 1 เกม ออกทั้งคู่'} · ลูกแบดวันนี้ ${S.shTotal||0} ลูก</p>
+  return `<section class="band"><h1>สนาม</h1><p class="sub">${S.players.filter(p=>p.active).length} คนมาเล่น · รอ ${q.length} คน · ${king?`แพ้ออก (ชนะติด ${2} ออกทั้งคู่)`:'เล่น 1 เกม ออกทั้งคู่'} · ลูกแบดวันนี้ ${S.shTotal||0} ลูก</p>
   ${S.sample?'<p class="note">กำลังแสดงรายชื่อตัวอย่าง แก้ไขได้ที่แท็บ “ผู้เล่น” หรือล้างที่ “ตั้งค่า”</p>':''}
   <div class="courts">${S.courts.map(courtHTML).join('')}</div>
   <h2>คิวรอ</h2><div class="qcols">${['A','B'].map(g=>{const l=q.filter(p=>p.g===g);return `<div class="qcol"><h3><i class="g ${g}">${g}</i>กลุ่ม ${g}<small>${l.length} คน</small></h3>${l.length?`<ol class="queue">${l.map((p,i)=>`<li class="${i<2?'next':''}"><b>${i+1}</b>${chip(p)}<small>${p.games} เกม</small></li>`).join('')}</ol>`:'<p class="empty-note">ไม่มีคนรอ</p>'}</div>`}).join('')}</div>
   <p class="sub" style="margin-top:10px">กรอบเขียว = ใกล้ได้ลงสนาม · เรียงตามเวลาที่รอ</p></section>`}
 function vPlayers(){const ps=S.players,b=busy(),nA=ps.filter(p=>p.g==='A'&&p.active).length,nB=ps.filter(p=>p.g==='B'&&p.active).length,ex=nA>nB?'A':'B';
-  return `<section class="band"><h1>ผู้เล่น</h1><p class="sub">มาเล่น: กลุ่ม A ${nA} คน · กลุ่ม B ${nB} คน${nA!==nB?` — ${ex} มากกว่า ${Math.abs(nA-nB)} คน ${Math.abs(nA-nB)>=S.settings.sameDiff?`จึงจัด ${ex}${ex} vs ${ex}${ex} ได้`:`(ต้องต่างกันตั้งแต่ ${S.settings.sameDiff} คน จึงจะจัด ${ex}${ex} vs ${ex}${ex})`}`:''}</p>
+  return `<section class="band"><h1>ผู้เล่น</h1><p class="sub">มาเล่น: กลุ่ม A ${nA} คน · กลุ่ม B ${nB} คน${nA!==nB?` — ${ex} มากกว่า ${Math.abs(nA-nB)} คน ${Math.abs(nA-nB)>=4?`จึงจัด ${ex}${ex} vs ${ex}${ex} ได้`:`(ต้องต่างกันตั้งแต่ 4 คน จึงจะจัด ${ex}${ex} vs ${ex}${ex})`}`:''}</p>
   <form id="addf" class="card add"><input id="nm" placeholder="ชื่อ (หลายคนคั่นด้วย , )" autocomplete="off" aria-label="ชื่อผู้เล่น"><div class="seg">${['A','B'].map(g=>`<button type="button" class="${addG===g?'on':''}" data-act="addg" data-g="${g}">กลุ่ม ${g}</button>`).join('')}</div><button class="btn">เพิ่ม</button></form>
   ${ps.length?`<div class="plhead"><b>รายชื่อ ${ps.length} คน</b><button class="mini" data-act="sortg">รีเซ็ตเรียง A → B</button></div><ul class="plist">${ps.map(p=>p.id===editId?`<li><form class="ren" id="renf" data-id="${p.id}"><i class="g ${p.g}">${p.g}</i><input id="ren" value="${esc(p.name)}" maxlength="30" aria-label="ชื่อใหม่" autocomplete="off"><button class="btn">บันทึก</button><button class="btn ghost" type="button" data-act="rencancel">ยกเลิก</button></form></li>`:`<li class="${p.active?'':'off'}">${chip(p)}<small>${b.has(p.id)?'อยู่ในสนาม':p.active?'พร้อมเล่น':'พัก'}</small><span class="acts"><button class="mini" data-act="ren" data-id="${p.id}">แก้ชื่อ</button><button class="mini" data-act="grp" data-id="${p.id}">ย้ายไป ${p.g==='A'?'B':'A'}</button><button class="mini" data-act="act" data-id="${p.id}">${p.active?'พัก':'กลับมาเล่น'}</button><button class="mini del" data-act="del" data-id="${p.id}">ลบ</button></span></li>`).join('')}</ul>`:'<p class="empty-note">ยังไม่มีผู้เล่น เพิ่มชื่อด้านบนได้เลย</p>'}</section>`}
 function ranked(){return S.players.filter(p=>p.games).sort((a,b)=>b.wins/b.games-a.wins/a.games||b.wins-a.wins||b.games-a.games)}
@@ -422,16 +423,14 @@ function previewPts(N){const s=S.settings,M=Math.ceil(N/2),P=s.topPts,Q=s.minusM
 function vSettings(){const s=S.settings,pm=s.scoreMode==='points';
   return `<section class="band"><h1>ตั้งค่า</h1><p class="sub">แตะหัวข้อเพื่อเปิดดู · ปรับได้ระหว่างเล่น มีผลตั้งแต่เกมถัดไป</p><div class="set">
   ${acctCard()}
-  <details class="card sect" data-sec="match" ${OPEN.match?'open':''}><summary><span><b>การจับคู่</b><small>${s.mode==='king'?'แพ้ออก · ชนะติด '+s.maxWins+' ออก':'เล่น 1 เกม ออกทั้งคู่'} · ${s.courts} สนาม</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
+  <details class="card sect" data-sec="match" ${OPEN.match?'open':''}><summary><span><b>การจับคู่</b><small>${s.mode==='king'?'แพ้ออก · ชนะติด '+2+' ออก':'เล่น 1 เกม ออกทั้งคู่'} · ${s.courts} สนาม</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
   <div class="opt"><button class="${s.mode==='king'?'on':''}" data-act="mode" data-m="king"><b>แพ้ออก</b><span>ผู้ชนะอยู่ต่อ ชนะติดครบกำหนดออกทั้ง 2 คู่</span></button><button class="${s.mode==='one'?'on':''}" data-act="mode" data-m="one"><b>เล่น 1 เกม ออกทั้งคู่</b><span>จบเกมแล้วทั้ง 4 คนกลับเข้าคิว</span></button></div>
-  ${s.mode==='king'?`<div class="card step"><span>ชนะติดกี่ครั้งต้องออก</span><div><button class="round" data-act="mw" data-d="-1" aria-label="ลด">−</button><output>${s.maxWins}</output><button class="round" data-act="mw" data-d="1" aria-label="เพิ่ม">+</button></div></div>`:''}
-  <div class="card step"><span>จัด AA vs AA / BB vs BB เมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ (คน)<br><small style="color:var(--mut)">ค่าเริ่มต้น 5 = มากกว่าเกิน 4 คน</small></span><div><button class="round" data-act="sd" data-d="-1" aria-label="ลด">−</button><output>${s.sameDiff}</output><button class="round" data-act="sd" data-d="1" aria-label="เพิ่ม">+</button></div></div>
   <div class="card step"><span>เตือนเมื่อเล่นนานเกิน (นาที)<br><small style="color:var(--mut)">ตัวจับเวลาบนสนามเปลี่ยนเป็นสีส้ม · 0 = ไม่เตือน</small></span><div><button class="round" data-act="tw" data-d="-5" aria-label="ลด">−</button><output>${s.timeWarn}</output><button class="round" data-act="tw" data-d="5" aria-label="เพิ่ม">+</button></div></div>
   <div class="card step"><span>จำนวนสนาม</span><div><button class="round" data-act="ct" data-d="-1" aria-label="ลด">−</button><output>${s.courts}</output><button class="round" data-act="ct" data-d="1" aria-label="เพิ่ม">+</button></div></div>
   <div class="card step"><span>ถ่วงฝีมือจาก % ชนะ<br><small style="color:var(--mut)">ไม่ให้คนเก่งจับคู่กันจนชนะยาว</small></span><button class="sw ${s.balance?'on':''}" data-act="bal" aria-label="ถ่วงฝีมือ" aria-pressed="${s.balance}"></button></div>
   <div class="card"><details><summary>ระบบจัดคู่ทำงานอย่างไร</summary><ol>
   <li>แบ่งผู้เล่นเป็นกลุ่ม A และ B (ย้ายกลุ่มเองได้ในแท็บผู้เล่น ระบบไม่ย้ายให้)</li>
-  <li>จับ A คู่กับ B เสมอ จะจัด AA vs AA หรือ BB vs BB ก็ต่อเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ ${s.sameDiff} คน (นับเฉพาะคนที่มาเล่น ไม่นับคนพัก) และไม่มีการจับ AA เจอ AB</li>
+  <li>จับ A คู่กับ B เสมอ จะจัด AA vs AA หรือ BB vs BB ก็ต่อเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ 4 คน (นับเฉพาะคนที่มาเล่น ไม่นับคนพัก) และไม่มีการจับ AA เจอ AB</li>
   <li>คนที่รอนานสุดได้ลงก่อน คิวเรียงตามเวลาออกจากสนาม</li>
   <li>ห้ามจับคู่ซ้ำกับคู่ล่าสุด และลดโอกาสคู่ที่เคยจับบ่อย</li>
   <li>ลดการเจอคู่ตรงข้ามซ้ำ โดยนับว่าแต่ละคนเคยเจอใครกี่ครั้ง</li>
@@ -450,6 +449,7 @@ function vSettings(){const s=S.settings,pm=s.scoreMode==='points';
   <div class="card clr"><div><b>3. ล้างทั้งหมด</b><span>ล้างสกอร์ คะแนนสะสม ผลการแข่งขันที่ผ่านมา และผู้เล่น (การตั้งค่ายังอยู่)</span></div><button class="btn warn" data-act="wipe">ล้างทั้งหมด</button></div>
   </div></details>
   ${shareCard()}
+  <div class="card"><b>แนะนำแอปให้เพื่อน</b><p class="sub" style="margin:6px 0 0">ส่งลิงก์ให้ก๊วนอื่นที่สนใจ เปิดแล้วใช้ได้ทันที ฟรี ไม่ต้องโหลดจาก App Store</p><div class="shlink"><input readonly value="${APP_URL}" aria-label="ลิงก์แอป" onclick="this.select()"><button class="btn" data-act="appshare">ส่งลิงก์</button><button class="btn ghost" data-act="appcopy">คัดลอก</button></div></div>
   <div class="card"><b>ติดตั้งเป็นแอปบนเครื่อง</b><p class="sub" style="margin:6px 0 0">${installHelp()}</p></div>
   <div class="card"><b>สำรอง / ย้ายข้อมูลไปเครื่องอื่น</b><p class="sub" style="margin:6px 0 12px">ส่งออกเป็นไฟล์หรือข้อความ แล้วนำเข้าที่อีกเครื่อง ใช้ได้ข้ามระบบ (iPhone ↔ Android ↔ คอมพิวเตอร์)</p>
   <div style="display:flex;flex-wrap:wrap;gap:10px"><button class="btn ghost" data-act="exp">บันทึกเป็นไฟล์</button><button class="btn ghost" data-act="expc">คัดลอกเป็นข้อความ</button><label class="btn ghost" style="display:inline-flex;align-items:center">นำเข้าจากไฟล์<input type="file" id="impf" accept=".json,application/json,text/plain" hidden></label><button class="btn ghost" data-act="impt">วางข้อความ</button></div>
@@ -493,9 +493,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act],[data
   else if(a==='act'&&p){snap();p.active=!p.active;if(p.active)p.q=S.clock++;commit()}
   else if(a==='del'&&p)ask(`ลบ ${p.name}? ถ้าอยู่ในสนาม เกมนั้นจะถูกยกเลิก`,'ลบ',()=>{snap();S.courts.forEach(c=>{if(c.t1&&[...c.t1,...c.t2].includes(id)){const ids=[...c.t1,...c.t2].filter(x=>x!==id);clearC(c);front(ids)}});S.players=S.players.filter(x=>x.id!==id);commit()});
   else if(a==='mode'){s.mode=t.dataset.m;S.courts.forEach(c=>{c.stay=null;c.streak=0});commit()}
-  else if(a==='mw'){s.maxWins=Math.min(5,Math.max(1,s.maxWins+ +t.dataset.d));commit()}
-  else if(a==='ct'){snap();s.courts=Math.min(8,Math.max(1,s.courts+ +t.dataset.d));syncCourts();commit()}
-  else if(a==='sd'){s.sameDiff=Math.min(10,Math.max(1,s.sameDiff+ +t.dataset.d));commit()}
+  else if(a==='ct'){snap();s.courts=Math.min(12,Math.max(1,s.courts+ +t.dataset.d));syncCourts();commit()}
   else if(a==='tw'){s.timeWarn=Math.min(60,Math.max(0,s.timeWarn+ +t.dataset.d));commit()}
   else if(a==='bal'){s.balance=!s.balance;commit()}
   else if(a==='newday')ask('ล้างสกอร์และคู่ในสนาม? ผลวันนี้จะไม่ถูกบันทึก รายชื่อและคะแนนสะสมยังอยู่','ล้างสกอร์',()=>{snap();resetDay();commit();toast('ล้างสกอร์แล้ว กด “จัดคู่ลงสนาม” เพื่อเริ่ม')});
@@ -620,6 +618,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
     acctUid=acct=null;aSt='';try{localStorage.removeItem(AKEY)}catch(err){}G.share={};saveG();render();toast('ออกจากระบบแล้ว')})});
 function resumeAcct(){let had=null;try{had=localStorage.getItem(AKEY)}catch(e){}if(!had||!FB)return;
   fb().then(async f=>{await f.auth.authStateReady();const u=f.auth.currentUser;if(u&&!u.isAnonymous){setAcct(f);listenAcct(f);render()}else{try{localStorage.removeItem(AKEY)}catch(e){}}}).catch(()=>{acct=had;setA('!ออฟไลน์ ใช้ข้อมูลในเครื่องไปก่อน')})}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||VIEW)return;const a=t.dataset.act;
+  if(a==='appcopy'){try{navigator.clipboard.writeText(APP_URL).then(()=>toast('คัดลอกลิงก์แอปแล้ว'),()=>toast('คัดลอกไม่ได้ กดค้างที่ลิงก์แล้วคัดลอก'))}catch(err){toast('คัดลอกไม่ได้')}}
+  else if(a==='appshare'){const d={title:'แอปจัดคู่แบดมินตัน',text:'แอปจัดคู่ตีแบด แบ่งกลุ่ม A/B สลับคู่อัตโนมัติ มีสกอร์บอร์ด ใช้ฟรี',url:APP_URL};if(navigator.share)navigator.share(d).catch(()=>{});else{try{navigator.clipboard.writeText(APP_URL);toast('คัดลอกลิงก์แอปแล้ว')}catch(err){}}}});
 // ---------- โหมดผู้ชม ----------
 function vbar(state,extra){const b=$('#vbar');b.hidden=false;b.innerHTML=`<i class="dot ${state}"></i><span><b>ดูอย่างเดียว</b> · ${esc(gName())}${extra?' · '+esc(extra):''}</span><button type="button" data-act="vexit">ออก</button>`}
 function startView(){document.documentElement.classList.add('ro');G={cur:'view',list:[{id:'view',name:'กำลังโหลด…'}]};S=blank();S.tab='courts';syncCourts();
