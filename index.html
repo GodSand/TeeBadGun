@@ -236,6 +236,8 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
 .ro .side,.ro .timer,.ro .gbtn{pointer-events:none}
 .ro #tabs{grid-template-columns:repeat(3,1fr)}
 .shlink{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.shlink input{flex:1 1 220px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:14px monospace}
+.afm{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.afm input{flex:1 1 160px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:inherit}.afm div{display:flex;gap:8px;flex:1 1 100%}
+[data-skin=pop] .afm input,[data-skin=pop] .shlink input{border:2px solid #111;background:#fff}
 .shst{font-size:14px;margin:8px 0 0}.shst.ok{color:var(--court)}.shst.err{color:#c8372d}
 </style>
 </head>
@@ -274,10 +276,10 @@ function sample(){const s=blank();['ต้น','บอย','เอ็ม','ป�
 const GKEY=KEY+'-groups';let G=null,gEdit=null;
 const skey=id=>id==='main'?KEY:KEY+'-g-'+id;
 function loadG(){try{G=JSON.parse(localStorage.getItem(GKEY))}catch(e){G=null}if(!G||!Array.isArray(G.list)||!G.list.length)G={cur:'main',list:[{id:'main',name:'ก๊วนหลัก'}]};if(!G.list.some(g=>g.id===G.cur))G.cur=G.list[0].id}
-function saveG(){if(VIEW)return;try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}}
+function saveG(){if(VIEW)return;try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}if(acctOn())schedAcct()}
 const gName=()=>(G.list.find(g=>g.id===G.cur)||{}).name||'จัดคู่แบด';
 function load(id){try{const t=localStorage.getItem(skey(id||G.cur));if(t)return JSON.parse(t)}catch(e){}return null}
-function save(){if(VIEW)return;try{localStorage.setItem(skey(G.cur),JSON.stringify(S))}catch(e){}if(shRoom())schedPush()}
+function save(){if(VIEW)return;try{localStorage.setItem(skey(G.cur),JSON.stringify(S))}catch(e){}if(shRoom())schedPush();if(acctOn())schedAcct(G.cur)}
 function openState(){const x=load();if(!x){S=G.cur==='main'?sample():blank();syncCourts();if(S.sample)autofill()}
   else{S=x;S.settings=Object.assign(blank().settings,S.settings);if(!S.sessions)S.sessions=[];if(S.shTotal==null)S.shTotal=0;S.courts.forEach(c=>{if(c.t1&&!c.start)c.start=Date.now()});syncCourts()}}
 function switchGroup(id){if(id===G.cur){closeGrp();return}save();const tab=S.tab;G.cur=id;saveG();undo=[];editId=null;openState();S.tab=tab;closeGrp();commit();toast('เปิดก๊วน '+gName())}
@@ -419,6 +421,7 @@ function saveDay(){snap();const st=standings();
 function previewPts(N){const s=S.settings,M=Math.ceil(N/2),P=s.topPts,Q=s.minusMax;return [...Array(N)].map((_,i)=>{const r=i+1,v=Math.round(r===M?0:r<M?(r===1?P:(P-3)*(M-r)/(M-2)):-Q*(r-M)/(N-M))+0;return (v>0?'+':'')+v}).join(' ')}
 function vSettings(){const s=S.settings,pm=s.scoreMode==='points';
   return `<section class="band"><h1>ตั้งค่า</h1><p class="sub">แตะหัวข้อเพื่อเปิดดู · ปรับได้ระหว่างเล่น มีผลตั้งแต่เกมถัดไป</p><div class="set">
+  ${acctCard()}
   <details class="card sect" data-sec="match" ${OPEN.match?'open':''}><summary><span><b>การจับคู่</b><small>${s.mode==='king'?'แพ้ออก · ชนะติด '+s.maxWins+' ออก':'เล่น 1 เกม ออกทั้งคู่'} · ${s.courts} สนาม</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
   <div class="opt"><button class="${s.mode==='king'?'on':''}" data-act="mode" data-m="king"><b>แพ้ออก</b><span>ผู้ชนะอยู่ต่อ ชนะติดครบกำหนดออกทั้ง 2 คู่</span></button><button class="${s.mode==='one'?'on':''}" data-act="mode" data-m="one"><b>เล่น 1 เกม ออกทั้งคู่</b><span>จบเกมแล้วทั้ง 4 คนกลับเข้าคิว</span></button></div>
   ${s.mode==='king'?`<div class="card step"><span>ชนะติดกี่ครั้งต้องออก</span><div><button class="round" data-act="mw" data-d="-1" aria-label="ลด">−</button><output>${s.maxWins}</output><button class="round" data-act="mw" data-d="1" aria-label="เพิ่ม">+</button></div></div>`:''}
@@ -561,6 +564,62 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
   else if(a==='shsend'&&r){const d={title:'ดูสนามแบด '+gName(),url:shLink(r)};if(navigator.share)navigator.share(d).catch(()=>{});else{try{navigator.clipboard.writeText(d.url);toast('คัดลอกลิงก์แล้ว')}catch(err){}}}
   else if(a==='shoff'&&r)ask('หยุดแชร์? คนที่เปิดลิงก์อยู่จะเห็นว่าปิดการแชร์ และลิงก์นี้จะใช้ไม่ได้อีก','หยุดแชร์',async()=>{delete G.share[G.cur];saveG();shSt='';render();
     try{const f=await fb(),uid=await me(f);await f.D.set(f.D.ref(f.db,'rooms/'+r),{owner:uid,name:gName(),stopped:true})}catch(err){}toast('หยุดแชร์แล้ว')})});
+// ---------- บัญชี ID + รหัสผ่าน: ข้อมูลทุกก๊วนผูกกับบัญชี ใช้ต่อได้ทุกเครื่อง ----------
+const AKEY=KEY+'-acct',DEV=(()=>{try{let d=localStorage.getItem(KEY+'-dev');if(!d){d=rid();localStorage.setItem(KEY+'-dev',d)}return d}catch(e){return rid()}})();
+let acct=null,acctUid=null,aSt='',unsubA=null,rKeys=new Set(),aT=null,aG=false,aS=new Set(),aPend=null;
+const umail=u=>u+'@users.teebadgun.app';
+function acctOn(){return !VIEW&&!!acctUid}
+function setA(t){aSt=t;const e=$('#ast');if(e){e.textContent=t.replace(/^[!+]/,'');e.className='shst'+(t[0]==='!'?' err':t[0]==='+'?' ok':'')}}
+const now=()=>new Date().toLocaleTimeString('th-TH');
+function gNoCur(){const g=Object.assign({},G);delete g.cur;return JSON.stringify(g)}
+function schedAcct(gid){if(gid)aS.add(gid);else aG=true;clearTimeout(aT);aT=setTimeout(pushAcct,500)}
+async function pushAcct(){if(!acctOn())return;const f=await fb(),t=f.D.serverTimestamp(),up={};
+  if(aG){up.G={s:gNoCur(),dev:DEV,t};rKeys.forEach(k=>{if(!G.list.some(x=>x.id===k))up['states/'+k]=null})}
+  aS.forEach(id=>{let s=null;try{s=id===G.cur?JSON.stringify(S):localStorage.getItem(skey(id))}catch(e){}if(s&&G.list.some(x=>x.id===id))up['states/'+id]={s,dev:DEV,t}});
+  aG=false;aS.clear();if(!Object.keys(up).length)return;
+  try{await f.D.update(f.D.ref(f.db,'users/'+acctUid),up);setA('+ซิงก์แล้ว '+now())}catch(e){setA('!ซิงก์ไม่สำเร็จ (ไม่มีเน็ต?) จะลองใหม่เมื่อมีการเปลี่ยนแปลง');aG=true}}
+function uploadAll(){aG=true;G.list.forEach(g=>aS.add(g.id));return pushAcct()}
+function applyRemote(v,force){v=v||{};rKeys=new Set(Object.keys(v.states||{}));let ch=false;
+  if(v.G&&v.G.s&&(force||v.G.dev!==DEV)&&v.G.s!==gNoCur()){try{const g=JSON.parse(v.G.s);if(Array.isArray(g.list)&&g.list.length){g.cur=g.list.some(x=>x.id===G.cur)?G.cur:g.list[0].id;G=g;localStorage.setItem(GKEY,JSON.stringify(G));ch=true}}catch(e){}}
+  for(const [id,x] of Object.entries(v.states||{})){if(!x||!x.s||(!force&&x.dev===DEV))continue;let cur=null;try{cur=localStorage.getItem(skey(id))}catch(e){}
+    if(cur!==x.s){try{localStorage.setItem(skey(id),x.s)}catch(e){}if(id===G.cur)ch=true}}
+  if(ch){const tab=S.tab;openState();S.tab=tab;undo=[];editId=null;render();if(!force)toast('อัปเดตจากอีกเครื่องแล้ว')}}
+function listenAcct(f){if(unsubA)unsubA();unsubA=f.D.onValue(f.D.ref(f.db,'users/'+acctUid),s=>{applyRemote(s.val(),false);setA('+ซิงก์แล้ว '+now())},()=>setA('!อ่านข้อมูลบัญชีไม่ได้'))}
+function setAcct(f){const u=f.auth.currentUser;acctUid=u.uid;acct=(u.email||'').split('@')[0];try{localStorage.setItem(AKEY,acct)}catch(e){}}
+function aErr(e){const c=e&&e.code||'';return c.includes('email-already-in-use')||c.includes('credential-already-in-use')?'ID นี้มีคนใช้แล้ว ลองชื่ออื่น':
+  /invalid-credential|wrong-password|user-not-found|invalid-login/.test(c)?'ID หรือรหัสผ่านไม่ถูกต้อง':c.includes('too-many-requests')?'ลองผิดหลายครั้ง รอสักครู่แล้วลองใหม่':
+  c.includes('operation-not-allowed')?'ยังไม่ได้เปิดล็อกอินแบบรหัสผ่านใน Firebase':c.includes('weak-password')?'รหัสผ่านสั้นไป (อย่างน้อย 6 ตัว)':c.includes('network')?'ไม่มีอินเทอร์เน็ต':'ไม่สำเร็จ ('+(c||'error')+')'}
+function acctCard(){if(!FB||VIEW)return '';
+  if(acctOn())return `<div class="card"><b>บัญชี: ${esc(acct)}</b><p class="sub" style="margin:6px 0 0">ข้อมูลทุกก๊วน ประวัติ คะแนนสะสม และลิงก์แชร์ ผูกกับบัญชีนี้ ล็อกอินเครื่องไหนก็คุมสนามต่อได้ทันที ลิงก์ผู้ชมใช้ลิงก์เดิม</p>
+    <p id="ast" class="shst${aSt[0]==='!'?' err':aSt[0]==='+'?' ok':''}">${esc(aSt.replace(/^[!+]/,'')||'กำลังซิงก์…')}</p><div style="margin-top:10px"><button class="btn ghost" data-act="aout">ออกจากระบบ</button></div></div>`;
+  return `<div class="card"><b>บัญชี (ไม่บังคับ)</b><p class="sub" style="margin:6px 0 0">สมัคร ID เพื่อให้ข้อมูลและประวัติตามไปทุกเครื่อง และเป็นผู้คุมสนาม (host) จากเครื่องไหนก็ได้ · <b>จำรหัสผ่านไว้ให้ดี ลืมแล้วกู้คืนไม่ได้</b></p>
+    <form id="af" class="afm"><input id="au" placeholder="ID (a-z 0-9 . _ -)" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="20" aria-label="ID"><input id="ap" type="password" placeholder="รหัสผ่าน (6 ตัวขึ้นไป)" autocomplete="current-password" aria-label="รหัสผ่าน"><div><button class="btn">เข้าสู่ระบบ</button><button class="btn ghost" type="button" data-act="aup">สมัคร ID ใหม่</button></div></form>
+    <p id="ast" class="shst${aSt[0]==='!'?' err':''}">${aSt[0]==='!'?esc(aSt.slice(1)):''}</p></div>`}
+async function doAuth(mode){const u=($('#au').value||'').trim().toLowerCase(),p=$('#ap').value||'';
+  if(!/^[a-z0-9._-]{3,20}$/.test(u)){setA('!ID ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–20 ตัว');return}
+  if(p.length<6){setA('!รหัสผ่านต้องมีอย่างน้อย 6 ตัว');return}
+  setA(mode==='up'?'กำลังสมัคร…':'กำลังเข้าสู่ระบบ…');
+  try{const f=await fb();await f.auth.authStateReady();const prev=f.auth.currentUser;let linked=false;
+    if(mode==='up'){if(prev&&prev.isAnonymous){await f.Au.linkWithCredential(prev,f.Au.EmailAuthProvider.credential(umail(u),p));linked=true}else await f.Au.createUserWithEmailAndPassword(f.auth,umail(u),p)}
+    else await f.Au.signInWithEmailAndPassword(f.auth,umail(u),p);
+    const uid=f.auth.currentUser.uid,v=(await f.D.get(f.D.ref(f.db,'users/'+uid))).val();
+    if(!linked&&G.share){G.share={};try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}}
+    if(v&&v.G&&v.G.s){aPend={f,v};$('#sumbody').innerHTML=`<h2 style="margin:0 0 6px">บัญชี ${esc(u)} มีข้อมูลอยู่แล้ว</h2><p class="sub">จะใช้ข้อมูลชุดไหน</p>
+      <div class="opt" style="margin-top:12px"><button data-act="aacc"><b>ใช้ข้อมูลในบัญชี</b><span>แนะนำ ข้อมูลในเครื่องนี้จะถูกแทนที่ (เก็บสำรองไว้ในเครื่อง)</span></button><button data-act="aloc"><b>ใช้ข้อมูลในเครื่องนี้</b><span>อัปโหลดข้อมูลเครื่องนี้ทับข้อมูลในบัญชี</span></button></div>`;$('#sum').classList.add('show');return}
+    setAcct(f);await uploadAll();listenAcct(f);aSt='';render();toast(mode==='up'?'สมัครแล้ว ข้อมูลในเครื่องนี้ผูกกับ ID '+u:'เข้าสู่ระบบแล้ว')}
+  catch(e){setA('!'+aErr(e))}}
+document.addEventListener('submit',e=>{if(e.target.id!=='af')return;e.preventDefault();doAuth('in')});
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]');if(!t||VIEW)return;const a=t.dataset.act;
+  if(a==='aup')doAuth('up');
+  else if((a==='aacc'||a==='aloc')&&aPend){const {f,v}=aPend;aPend=null;$('#sum').classList.remove('show');setAcct(f);
+    if(a==='aacc'){try{const bk={G,states:{}};G.list.forEach(g=>{bk.states[g.id]=localStorage.getItem(skey(g.id))});localStorage.setItem(KEY+'-bak',JSON.stringify(bk))}catch(err){}applyRemote(v,true);rKeys=new Set(Object.keys(v.states||{}))}
+    else{rKeys=new Set(Object.keys(v.states||{}));await uploadAll()}
+    listenAcct(f);aSt='';render();toast('เข้าสู่ระบบแล้ว')}
+  else if(a==='aout')ask('ออกจากระบบ? ข้อมูลยังอยู่ในเครื่องนี้ แต่จะไม่ซิงก์และหยุดส่งข้อมูลให้ลิงก์ผู้ชมจากเครื่องนี้','ออกจากระบบ',async()=>{
+    try{const f=await fb();if(unsubA)unsubA();unsubA=null;await f.Au.signOut(f.auth)}catch(err){}
+    acctUid=acct=null;aSt='';try{localStorage.removeItem(AKEY)}catch(err){}G.share={};saveG();render();toast('ออกจากระบบแล้ว')})});
+function resumeAcct(){let had=null;try{had=localStorage.getItem(AKEY)}catch(e){}if(!had||!FB)return;
+  fb().then(async f=>{await f.auth.authStateReady();const u=f.auth.currentUser;if(u&&!u.isAnonymous){setAcct(f);listenAcct(f);render()}else{try{localStorage.removeItem(AKEY)}catch(e){}}}).catch(()=>{acct=had;setA('!ออฟไลน์ ใช้ข้อมูลในเครื่องไปก่อน')})}
 // ---------- โหมดผู้ชม ----------
 function vbar(state,extra){const b=$('#vbar');b.hidden=false;b.innerHTML=`<i class="dot ${state}"></i><span><b>ดูอย่างเดียว</b> · ${esc(gName())}${extra?' · '+esc(extra):''}</span><button type="button" data-act="vexit">ออก</button>`}
 function startView(){document.documentElement.classList.add('ro');G={cur:'view',list:[{id:'view',name:'กำลังโหลด…'}]};S=blank();S.tab='courts';syncCourts();
@@ -575,7 +634,7 @@ function startView(){document.documentElement.classList.add('ro');G={cur:'view',
       try{const tab=S.tab,o=JSON.parse(v.state);S=Object.assign(blank(),o);S.settings=Object.assign(blank().settings,o.settings);S.tab=tab==='settings'?'courts':tab;G.list[0].name=v.name||'จัดคู่แบด';
         last='อัปเดต '+new Date(v.t||Date.now()).toLocaleTimeString('th-TH');render();bar()}catch(err){}},()=>{last='เปิดห้องนี้ไม่ได้';bar()})})
   .catch(()=>{conn='off';last=FB?'โหลดไม่สำเร็จ ตรวจอินเทอร์เน็ต':'ยังไม่ได้ตั้งค่า Firebase';bar()})}
-if(VIEW)startView();else{loadG();openState();if(shRoom())schedPush()}
+if(VIEW)startView();else{loadG();openState();if(shRoom())schedPush();resumeAcct()}
 $('#gbtn').addEventListener('click',openGrp);
 document.addEventListener('submit',e=>{const f=e.target;
   if(f.id==='gnewf'){e.preventDefault();const nm=$('#gnew').value.trim().slice(0,30);if(!nm){toast('กรุณาใส่ชื่อก๊วน');return}
