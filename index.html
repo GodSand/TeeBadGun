@@ -227,6 +227,16 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
 [data-skin=pop] .num{border:2px solid #111;background:#fff}
 [data-skin=pop] .shsum h3{font-family:Mitr,sans-serif;font-weight:500}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* แชร์ให้ดู / โหมดผู้ชม */
+.vbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px max(4vw,16px);background:#111;color:#fff;font-size:14px}
+.vbar[hidden]{display:none}.vbar b{font-weight:600}.vbar .dot{width:9px;height:9px;border-radius:50%;background:#f5a623;flex:none}.vbar .dot.on{background:#2ecc71}.vbar .dot.off{background:#e74c3c}
+.vbar span{flex:1 1 auto}.vbar button{background:#fff;color:#111;border:0;border-radius:99px;padding:6px 14px;font:inherit;font-weight:600}
+.ro .top{position:static}
+.ro .hint,.ro .court header .link,.ro #undo,.ro .endb,.ro #inst,.ro #tabs [data-tab=settings],.ro .floor.idle .btn,.ro .shrow button,.ro .note,.ro .add,.ro .plhead .mini,.ro .plist .acts,.ro .gbtn svg,.ro [data-act=sumsave]{display:none!important}
+.ro .side,.ro .timer,.ro .gbtn{pointer-events:none}
+.ro #tabs{grid-template-columns:repeat(3,1fr)}
+.shlink{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.shlink input{flex:1 1 220px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:14px monospace}
+.shst{font-size:14px;margin:8px 0 0}.shst.ok{color:var(--court)}.shst.err{color:#c8372d}
 </style>
 </head>
 <body>
@@ -234,6 +244,7 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
   <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="20" r="4.5" fill="#ffd84d"/><path d="M8.5 18 4 4h18l-4.5 14z" fill="#fff" opacity=".92"/><path d="M9 6l3 11M13 5v12M17 6l-3 11" stroke="#1d7a4f" stroke-width="1.2"/></svg><button class="gbtn" id="gbtn" aria-label="เลือกก๊วน"><span id="gname">จัดคู่แบด</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
   <button class="btn" id="inst" hidden>ติดตั้งแอป</button><button class="btn endb" data-act="end">จบการแข่งขัน</button><button class="btn icon" id="undo" aria-label="ย้อนกลับ" title="ย้อนกลับ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
 </header>
+<div class="vbar" id="vbar" hidden></div>
 <main id="app"></main>
 <nav class="tabs" id="tabs">
   <button data-tab="courts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16M3 12h18"/></svg>สนาม</button>
@@ -248,6 +259,11 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
 <script>
 {
 const KEY='badpair-v1';
+// Firebase สำหรับแชร์ให้คนอื่นดู (ค่า apiKey เปิดเผยได้ ความปลอดภัยอยู่ที่ Rules ของฐานข้อมูล)
+const FB={apiKey:"AIzaSyAVlQLpNc0z44pmZvCvwPWt87RaHFGuKvQ",authDomain:"godsandteebadgun.firebaseapp.com",databaseURL:"https://godsandteebadgun-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"godsandteebadgun",storageBucket:"godsandteebadgun.firebasestorage.app",messagingSenderId:"721004259215",appId:"1:721004259215:web:8f1ab2acfdede1cb8f0dfa"};
+const VKEY=KEY+'-view';
+let VIEW=null;try{VIEW=new URLSearchParams(location.search).get('view');if(VIEW)localStorage.setItem(VKEY,VIEW);else VIEW=localStorage.getItem(VKEY)}catch(e){}
+if(VIEW&&!/^[a-z0-9]{6,40}$/.test(VIEW))VIEW=null;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 let S,undo=[],addG='A',editId=null,mfn=null,tt=null;
@@ -258,10 +274,10 @@ function sample(){const s=blank();['ต้น','บอย','เอ็ม','ป�
 const GKEY=KEY+'-groups';let G=null,gEdit=null;
 const skey=id=>id==='main'?KEY:KEY+'-g-'+id;
 function loadG(){try{G=JSON.parse(localStorage.getItem(GKEY))}catch(e){G=null}if(!G||!Array.isArray(G.list)||!G.list.length)G={cur:'main',list:[{id:'main',name:'ก๊วนหลัก'}]};if(!G.list.some(g=>g.id===G.cur))G.cur=G.list[0].id}
-function saveG(){try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}}
+function saveG(){if(VIEW)return;try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}}
 const gName=()=>(G.list.find(g=>g.id===G.cur)||{}).name||'จัดคู่แบด';
 function load(id){try{const t=localStorage.getItem(skey(id||G.cur));if(t)return JSON.parse(t)}catch(e){}return null}
-function save(){try{localStorage.setItem(skey(G.cur),JSON.stringify(S))}catch(e){}}
+function save(){if(VIEW)return;try{localStorage.setItem(skey(G.cur),JSON.stringify(S))}catch(e){}if(shRoom())schedPush()}
 function openState(){const x=load();if(!x){S=G.cur==='main'?sample():blank();syncCourts();if(S.sample)autofill()}
   else{S=x;S.settings=Object.assign(blank().settings,S.settings);if(!S.sessions)S.sessions=[];if(S.shTotal==null)S.shTotal=0;S.courts.forEach(c=>{if(c.t1&&!c.start)c.start=Date.now()});syncCourts()}}
 function switchGroup(id){if(id===G.cur){closeGrp();return}save();const tab=S.tab;G.cur=id;saveG();undo=[];editId=null;openState();S.tab=tab;closeGrp();commit();toast('เปิดก๊วน '+gName())}
@@ -430,6 +446,7 @@ function vSettings(){const s=S.settings,pm=s.scoreMode==='points';
   <div class="card clr"><div><b>2. ล้างชื่อผู้เล่น</b><span>ลบรายชื่อผู้เล่นทั้งหมด (สกอร์และคะแนนสะสมของผู้เล่นจะหายไปด้วย)</span></div><button class="btn ghost" data-act="wipeplayers">ล้างชื่อ</button></div>
   <div class="card clr"><div><b>3. ล้างทั้งหมด</b><span>ล้างสกอร์ คะแนนสะสม ผลการแข่งขันที่ผ่านมา และผู้เล่น (การตั้งค่ายังอยู่)</span></div><button class="btn warn" data-act="wipe">ล้างทั้งหมด</button></div>
   </div></details>
+  ${shareCard()}
   <div class="card"><b>ติดตั้งเป็นแอปบนเครื่อง</b><p class="sub" style="margin:6px 0 0">${installHelp()}</p></div>
   <div class="card"><b>สำรอง / ย้ายข้อมูลไปเครื่องอื่น</b><p class="sub" style="margin:6px 0 12px">ส่งออกเป็นไฟล์หรือข้อความ แล้วนำเข้าที่อีกเครื่อง ใช้ได้ข้ามระบบ (iPhone ↔ Android ↔ คอมพิวเตอร์)</p>
   <div style="display:flex;flex-wrap:wrap;gap:10px"><button class="btn ghost" data-act="exp">บันทึกเป็นไฟล์</button><button class="btn ghost" data-act="expc">คัดลอกเป็นข้อความ</button><label class="btn ghost" style="display:inline-flex;align-items:center">นำเข้าจากไฟล์<input type="file" id="impf" accept=".json,application/json,text/plain" hidden></label><button class="btn ghost" data-act="impt">วางข้อความ</button></div>
@@ -512,7 +529,53 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();defer=e;$('
 window.addEventListener('appinstalled',()=>{$('#inst').hidden=true;toast('ติดตั้งแล้ว')});
 $('#inst').addEventListener('click',()=>{if(!defer)return;defer.prompt();defer.userChoice.finally(()=>{defer=null;$('#inst').hidden=true})});
 try{if('serviceWorker' in navigator&&window.isSecureContext&&window.top===window.self)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
-loadG();openState();
+// ---------- แชร์ให้คนอื่นดู ----------
+let fbp=null,shSt='',pushT=null,pushing=false,again=false;
+function fb(){if(!FB)return Promise.reject(new Error('nocfg'));
+  if(!fbp)fbp=(async()=>{const u=m=>`https://www.gstatic.com/firebasejs/10.12.2/firebase-${m}.js`;
+    const [A,Au,D]=await Promise.all([import(u('app')),import(u('auth')),import(u('database'))]);
+    const app=A.initializeApp(FB);return {Au,D,auth:Au.getAuth(app),db:D.getDatabase(app)}})();
+  fbp.catch(()=>{fbp=null});return fbp}
+function shRoom(){return !VIEW&&G&&G.share?G.share[G.cur]||null:null}
+const shLink=r=>location.origin+location.pathname+'?view='+r;
+function rid(){const a=new Uint8Array(12);crypto.getRandomValues(a);return [...a].map(x=>'abcdefghijklmnopqrstuvwxyz0123456789'[x%36]).join('')}
+async function me(f){await f.auth.authStateReady();if(!f.auth.currentUser)await f.Au.signInAnonymously(f.auth);return f.auth.currentUser.uid}
+function setSt(t){shSt=t;const e=$('#shst');if(e){e.textContent=t.replace(/^[!+]/,'');e.className='shst'+(t[0]==='!'?' err':t[0]==='+'?' ok':'')}}
+function schedPush(){clearTimeout(pushT);pushT=setTimeout(doPush,400)}
+async function doPush(){const room=shRoom();if(!room)return;if(pushing){again=true;return}pushing=true;
+  try{const f=await fb(),uid=await me(f),st=Object.assign({},S);delete st.tab;
+    await f.D.set(f.D.ref(f.db,'rooms/'+room),{owner:uid,name:gName(),t:f.D.serverTimestamp(),state:JSON.stringify(st)});
+    setSt('+กำลังแชร์ · อัปเดตล่าสุด '+new Date().toLocaleTimeString('th-TH'))}
+  catch(e){setSt(/PERMISSION|permission/.test(String(e))?'!เครื่องนี้ไม่มีสิทธิ์เขียนห้องนี้แล้ว กด “หยุดแชร์” แล้วเปิดลิงก์ใหม่':'!ส่งข้อมูลไม่สำเร็จ (ไม่มีเน็ต?) จะลองใหม่เมื่อมีการเปลี่ยนแปลง')}
+  finally{pushing=false;if(again){again=false;schedPush()}}}
+function shareCard(){const r=shRoom();
+  if(!FB)return `<div class="card"><b>แชร์ให้คนอื่นดู</b><p class="sub" style="margin:6px 0 0">ยังไม่ได้ตั้งค่า Firebase</p></div>`;
+  return `<div class="card"><b>แชร์ให้คนอื่นดู (ดูได้อย่างเดียว)</b><p class="sub" style="margin:6px 0 0">คนที่เปิดลิงก์จะเห็นสนาม คิว และสกอร์ของก๊วน “${esc(gName())}” ตรงกับเครื่องนี้แบบสด แต่แก้ไขอะไรไม่ได้ ต้องมีอินเทอร์เน็ตทั้งสองฝั่ง</p>
+  ${r?`<div class="shlink"><input readonly value="${esc(shLink(r))}" aria-label="ลิงก์สำหรับดู" onclick="this.select()"><button class="btn" data-act="shsend">ส่งลิงก์</button><button class="btn ghost" data-act="shcopy">คัดลอก</button><button class="btn ghost" data-act="shoff">หยุดแชร์</button></div><p id="shst" class="shst${shSt[0]==='!'?' err':shSt[0]==='+'?' ok':''}">${esc(shSt.replace(/^[!+]/,'')||'กำลังเชื่อมต่อ…')}</p>`
+  :`<div style="margin-top:12px"><button class="btn" data-act="shon">เปิดลิงก์สำหรับดู</button></div><p id="shst" class="shst err">${shSt[0]==='!'?esc(shSt.slice(1)):''}</p>`}</div>`}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]');if(!t||VIEW)return;const a=t.dataset.act,r=shRoom();
+  if(a==='shon'){t.disabled=true;t.textContent='กำลังเปิด…';
+    try{const f=await fb();await me(f);G.share=G.share||{};G.share[G.cur]=rid();saveG();shSt='';render();await doPush();if(shSt[0]==='!')throw 0;toast('เปิดลิงก์แล้ว ส่งให้เพื่อนได้เลย')}
+    catch(err){if(G.share)delete G.share[G.cur];saveG();shSt='!เปิดไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่';render()}}
+  else if(a==='shcopy'&&r){try{navigator.clipboard.writeText(shLink(r)).then(()=>toast('คัดลอกลิงก์แล้ว'),()=>toast('คัดลอกไม่ได้ กดค้างที่ลิงก์แล้วคัดลอก'))}catch(err){toast('คัดลอกไม่ได้')}}
+  else if(a==='shsend'&&r){const d={title:'ดูสนามแบด '+gName(),url:shLink(r)};if(navigator.share)navigator.share(d).catch(()=>{});else{try{navigator.clipboard.writeText(d.url);toast('คัดลอกลิงก์แล้ว')}catch(err){}}}
+  else if(a==='shoff'&&r)ask('หยุดแชร์? คนที่เปิดลิงก์อยู่จะเห็นว่าปิดการแชร์ และลิงก์นี้จะใช้ไม่ได้อีก','หยุดแชร์',async()=>{delete G.share[G.cur];saveG();shSt='';render();
+    try{const f=await fb(),uid=await me(f);await f.D.set(f.D.ref(f.db,'rooms/'+r),{owner:uid,name:gName(),stopped:true})}catch(err){}toast('หยุดแชร์แล้ว')})});
+// ---------- โหมดผู้ชม ----------
+function vbar(state,extra){const b=$('#vbar');b.hidden=false;b.innerHTML=`<i class="dot ${state}"></i><span><b>ดูอย่างเดียว</b> · ${esc(gName())}${extra?' · '+esc(extra):''}</span><button type="button" data-act="vexit">ออก</button>`}
+function startView(){document.documentElement.classList.add('ro');G={cur:'view',list:[{id:'view',name:'กำลังโหลด…'}]};S=blank();S.tab='courts';syncCourts();
+  let conn='',last='กำลังเชื่อมต่อ…';const bar=()=>vbar(conn,last);bar();
+  document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');
+    if(t&&t.dataset.act==='vexit'){e.stopImmediatePropagation();ask('ออกจากโหมดดู แล้วเปิดแอปเป็นของตัวเอง?','ออก',()=>{try{localStorage.removeItem(VKEY)}catch(err){}location.href=location.pathname});return}
+    if((t&&!['scopy','copy','sumclose'].includes(t.dataset.act))||e.target.closest('#gbtn,#undo')){e.stopImmediatePropagation();e.preventDefault()}},true);
+  document.addEventListener('submit',e=>{e.stopImmediatePropagation();e.preventDefault()},true);
+  fb().then(f=>{f.D.onValue(f.D.ref(f.db,'.info/connected'),s=>{conn=s.val()?'on':'off';if(!s.val())last='ขาดการเชื่อมต่อ กำลังลองใหม่…';bar()});
+    f.D.onValue(f.D.ref(f.db,'rooms/'+VIEW),s=>{const v=s.val();
+      if(!v||v.stopped||!v.state){if(v&&v.name)G.list[0].name=v.name;S=blank();S.tab=S.tab||'courts';syncCourts();last=v?'ผู้คุมสนามปิดการแชร์แล้ว':'ไม่พบห้องนี้ ตรวจลิงก์อีกครั้ง';render();bar();return}
+      try{const tab=S.tab,o=JSON.parse(v.state);S=Object.assign(blank(),o);S.settings=Object.assign(blank().settings,o.settings);S.tab=tab==='settings'?'courts':tab;G.list[0].name=v.name||'จัดคู่แบด';
+        last='อัปเดต '+new Date(v.t||Date.now()).toLocaleTimeString('th-TH');render();bar()}catch(err){}},()=>{last='เปิดห้องนี้ไม่ได้';bar()})})
+  .catch(()=>{conn='off';last=FB?'โหลดไม่สำเร็จ ตรวจอินเทอร์เน็ต':'ยังไม่ได้ตั้งค่า Firebase';bar()})}
+if(VIEW)startView();else{loadG();openState();if(shRoom())schedPush()}
 $('#gbtn').addEventListener('click',openGrp);
 document.addEventListener('submit',e=>{const f=e.target;
   if(f.id==='gnewf'){e.preventDefault();const nm=$('#gnew').value.trim().slice(0,30);if(!nm){toast('กรุณาใส่ชื่อก๊วน');return}
