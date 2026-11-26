@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="th" data-fire="1" data-skin="pop">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="จัดคู่แบด">
+<meta name="theme-color" content="#ffd23f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>จัดคู่แบดมินตัน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;700&family=IBM+Plex+Sans+Thai:wght@400;600&family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: คู่มือข้างสนาม ชัด เร็ว แตะง่ายด้วยนิ้วเดียว
+   IDEA: กระดานคุมสนามของแก๊งแบด — สนามจริงบนจอ แตะฝั่งที่ชนะ
+   PICTURE: พื้นสนามสีเขียว เส้นขาว ตาข่ายกลาง ชื่อผู้เล่นแต่ละฝั่ง
+   COLOUR and TYPE: เขียวสนาม #1d7a4f, ขาว, ส้ม A #f2602b, ฟ้า B #2b7de9 / Prompt + IBM Plex Sans Thai
+   LAYOUT: หัวแถบบน, สนามเรียงกริด, คิวรอด้านล่าง, แถบแท็บติดล่างสำหรับมือถือ */
+:root{color-scheme:light;--bg:#f3f6f2;--ink:#12201a;--card:#fff;--line:#dde4de;--mut:#5b6a62;--note:#fff4d6;--court:#1d7a4f;--courtd:#15603d;--a:#f2602b;--b:#2b7de9}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0d1411;--ink:#e7efe9;--card:#15201b;--line:#26342d;--mut:#9baba1;--note:#3a2f12}}
+:root[data-theme=dark]{color-scheme:dark;--bg:#0d1411;--ink:#e7efe9;--card:#15201b;--line:#26342d;--mut:#9baba1;--note:#3a2f12}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans Thai",system-ui,sans-serif;overflow-x:clip;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+h1,h2,.brand{font-family:Prompt,system-ui,sans-serif;font-weight:700;line-height:1.1;margin:0}
+h1{font-size:clamp(28px,5vw,40px)}h2{font-size:22px;margin:28px 0 12px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.top{position:sticky;top:0;z-index:5;background:var(--court);color:#fff;padding:calc(10px + env(safe-area-inset-top)) max(4vw,16px) 10px;display:flex;align-items:center;gap:12px}
+.brand{font-size:20px;display:flex;align-items:center;gap:8px;margin-inline-end:auto}
+.top .btn{background:rgba(255,255,255,.16);color:#fff;min-height:40px;padding:0 14px;white-space:nowrap}
+.top .endb{background:#fff;color:var(--courtd)}
+.top .icon{width:44px;padding:0;display:grid;place-items:center}
+.top .btn[disabled]{opacity:.4}
+.band{padding:22px max(4vw,16px);max-width:1240px;margin:0 auto}
+.sub{color:var(--mut);margin:6px 0 18px}
+.note{background:var(--note);border-radius:12px;padding:10px 14px;margin:0 0 16px;font-size:15px}
+.btn{border:0;border-radius:12px;background:var(--court);color:#fff;font-weight:600;min-height:46px;padding:0 18px}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn.light{background:#fff;color:var(--courtd)}.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}.btn.warn{background:#c8372d}
+.courts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
+.court{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:0 6px 20px -14px rgba(0,0,0,.5)}
+.court header{display:flex;align-items:center;gap:10px;margin:0 4px 10px}
+.court header b{font-family:Prompt;font-size:18px}
+.tag{font-size:13px;color:var(--mut);background:var(--bg);border-radius:99px;padding:2px 10px}
+.link{margin-inline-start:auto;background:none;border:0;color:var(--mut);text-decoration:underline;min-height:40px;font-size:14px}
+.floor{background:linear-gradient(180deg,var(--court),var(--courtd));border:3px solid #fff;border-radius:6px;display:grid;grid-template-columns:minmax(0,1fr) 8px minmax(0,1fr);min-height:190px;position:relative;box-shadow:inset 0 0 0 10px var(--court),inset 0 0 0 12px rgba(255,255,255,.75)}
+.floor.idle{display:grid;place-items:center;grid-template-columns:1fr;padding:16px}
+.timer{position:absolute;top:-17px;left:50%;transform:translateX(-50%);z-index:2;border:2px solid #fff;background:#12201a;color:#fff;border-radius:99px;min-height:34px;padding:0 14px;font:600 16px Prompt,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+.timer.long{background:#f2602b}
+.floor{margin-top:14px}
+.net{background:repeating-linear-gradient(180deg,#fff 0 4px,rgba(255,255,255,.25) 4px 8px);margin:-3px 0}
+.side{border:0;background:transparent;color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:28px 10px 14px;position:relative;transition:background .15s}
+.side:active,.side:hover{background:rgba(255,255,255,.12)}
+.side .nm{background:rgba(0,0,0,.28);color:#fff;font-size:17px;max-width:100%}
+.hint{font-size:13px;opacity:.85}
+.crown{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#ffd84d;color:#3a2c00;font-weight:600;font-size:13px;border-radius:99px;padding:1px 10px;white-space:nowrap}
+.nm{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 12px 3px 4px;background:var(--bg);font-weight:600;white-space:nowrap;position:relative;max-width:100%}
+.nm .tx{overflow:hidden;text-overflow:ellipsis}
+.g{position:relative}
+.cw{position:absolute;width:22px;height:17px;top:-14px;left:-7px;transform:rotate(-20deg);stroke:#111;stroke-width:1.3;stroke-linejoin:round;filter:drop-shadow(0 1px 0 rgba(0,0,0,.25))}
+.cw circle{stroke-width:.9}
+.nm.rk1,.side .nm.rk1,[data-skin] .side .nm.rk1,[data-skin] .nm.rk1{background:linear-gradient(135deg,#fff3b0,#ffd23f 55%,#ffb800);color:#111;box-shadow:0 0 0 3px rgba(255,200,40,.45),0 4px 14px -4px rgba(255,170,0,.8)}
+.nm.rk2,.side .nm.rk2,[data-skin] .side .nm.rk2,[data-skin] .nm.rk2{background:linear-gradient(135deg,#ffffff,#dfe5ec 60%,#c3ccd7);color:#111;box-shadow:0 0 0 2px rgba(180,192,206,.55)}
+.nm.rk3,.side .nm.rk3,[data-skin] .side .nm.rk3,[data-skin] .nm.rk3{background:linear-gradient(135deg,#fde3cb,#eeb487 60%,#d98f5a);color:#111}
+.rk1 .cw{fill:#ffcf1a;width:28px;height:21px;top:-18px;left:-9px}.rk1 .cw circle{fill:#ff4d6d}
+.rk2 .cw{fill:#e6ebf1}.rk2 .cw circle{fill:#4aa3ff}
+.rk3 .cw{fill:#e3965e;width:20px;height:15px;top:-12px;left:-6px}.rk3 .cw circle{fill:#fff}
+.spk{position:absolute;right:-7px;top:-9px;color:#ffb800;font-size:14px;line-height:1;text-shadow:0 0 6px rgba(255,200,0,.9);animation:tw 1.8s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.35;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
+.rk1 .cw{animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:rotate(-20deg) translateY(0)}50%{transform:rotate(-14deg) translateY(-2px)}}
+.g{font-style:normal;font-family:Prompt;font-size:13px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.g.A{background:var(--a)}.g.B{background:var(--b)}
+.qcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.qcol h3{display:flex;align-items:center;gap:8px;font:600 17px Prompt,sans-serif;margin:0 0 8px}
+.qcol h3 small{margin-inline-start:auto;color:var(--mut);font:400 14px "IBM Plex Sans Thai",sans-serif}
+.queue{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:8px}
+.queue li{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.queue li b{font-family:Prompt;width:22px;text-align:right;color:var(--mut)}
+.queue li.next{border-color:var(--court);box-shadow:inset 3px 0 0 var(--court)}
+.queue small,.plist small{color:var(--mut);margin-inline-start:auto;white-space:nowrap;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.add{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.add input{flex:1 1 240px;font-size:16px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 14px}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px;border:1px solid var(--line)}
+.seg button{border:0;background:none;min-height:40px;padding:0 14px;border-radius:9px;font-weight:600}
+.seg button.on{background:var(--court);color:#fff}
+.plhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px}
+.plist{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}
+.plist li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+.plist li.off{opacity:.55}
+.ren{display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%}.ren input{flex:1 1 160px;font-size:16px;min-height:44px;border-radius:12px;border:1px solid var(--court);background:var(--bg);color:var(--ink);padding:0 12px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.mini{border:1px solid var(--line);background:var(--bg);border-radius:10px;min-height:40px;padding:0 12px;font-size:14px}
+.mini.del{color:#c8372d}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;background:var(--card);border-radius:14px;overflow:hidden}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:13px;color:var(--mut);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.bar span{display:block;width:70px;height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--court)}
+.hist{list-style:none;padding:0;margin:0;display:grid;gap:6px;font-size:15px}
+.hist li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.hist em{font-style:normal;color:var(--court);font-weight:600}
+.set{display:grid;gap:14px;max-width:720px}
+.opt{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+.opt button{text-align:left;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px}
+.opt button.on{border-color:var(--court);box-shadow:inset 0 0 0 1px var(--court)}
+.opt b{display:block;font-family:Prompt}
+.opt span{font-size:14px;color:var(--mut)}
+.step{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.step div{display:flex;align-items:center;gap:8px;flex:none}.round{flex:none}
+.step output{font-family:Prompt;font-size:22px;width:36px;text-align:center}
+.round{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:22px}
+.sw{width:56px;height:32px;border-radius:99px;border:0;background:var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}
+.sw.on{background:var(--court)}.sw.on::after{left:28px}
+details{margin-top:4px}summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px}
+.tabs{position:fixed;bottom:0;left:0;right:0;z-index:6;display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{border:0;background:none;min-height:62px;font-weight:600;font-size:15px;color:var(--mut);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tabs button.on{color:var(--court);box-shadow:inset 0 3px 0 var(--court)}
+.tabs svg{width:22px;height:22px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;place-items:center;z-index:9;padding:20px}
+#modal{z-index:11}
+.gbtn{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:inherit;font:inherit;padding:6px 8px 6px 2px;min-height:44px;max-width:52vw}
+.gbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.glist{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.glist li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;padding:6px 8px;background:var(--card)}
+.glist li.cur{border-color:var(--court);box-shadow:inset 4px 0 0 var(--court)}
+.gopen{flex:1 1 160px;text-align:left;border:0;background:none;min-height:44px;padding:4px 6px}
+.gopen b{display:block;font-size:17px}.gopen small{color:var(--mut)}
+.modal.show{display:grid}
+.modal .card{max-width:400px;width:100%}
+.modal p{font-size:18px;margin:4px 0 16px}
+.modal .row{display:flex;gap:10px;justify-content:flex-end}
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;opacity:0;transition:.25s;z-index:8;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.empty-note{color:var(--mut)}
+.sect{padding:0 16px}
+.sect>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;cursor:pointer}
+.sect>summary::-webkit-details-marker{display:none}
+.sect>summary b{display:block;font-size:18px}.sect>summary small{display:block;color:var(--mut);font-size:14px;font-weight:400}
+.sect .chev{flex:none;transition:transform .2s}.sect[open] .chev{transform:rotate(180deg)}
+.sbody{display:grid;gap:12px;padding:2px 0 16px}
+.sect .card{box-shadow:none}[data-skin=pop] .sect .card,[data-skin=pop] .sect .opt button{box-shadow:none;border-width:2px}
+[data-skin=pop] .sect[open]>summary{border-bottom:2px dashed #111;margin-bottom:12px}
+.shrow{display:flex;align-items:center;gap:8px;margin-top:12px}
+.shc{display:flex;align-items:center;gap:6px;margin-right:auto;font-size:15px;color:var(--mut)}.shc b{font-size:20px;color:var(--ink)}
+.shi{width:22px;height:22px;flex:none}
+.shp{min-height:44px;padding:0 16px}
+.shsum{margin-top:14px}.shsum h3{display:flex;align-items:center;gap:8px;margin:0;font:600 18px Prompt,sans-serif}
+.num{width:96px;min-height:46px;font-size:18px;text-align:center;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.clr{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.clr div{flex:1 1 220px}.clr span{display:block;font-size:14px;color:var(--mut)}.clr .btn{flex:none}
+.sumcard{max-width:680px!important;max-height:88vh;overflow:auto}
+.pos{color:var(--court);font-weight:600}.neg{color:#c8372d;font-weight:600}
+.sess{margin-bottom:10px;padding:4px 14px}.sess>summary{min-height:56px}.sess>summary b{display:block}.sess>summary small{display:block;color:var(--mut);font-weight:400;font-size:14px}.sess table{margin:4px 0 10px}
+@media(max-width:600px){.bar span{display:none}th,td{padding:8px 4px}.sumcard{padding:12px}.modal{padding:8px}.sumcard .nm{padding-right:8px}.queue li{padding:7px 8px;gap:6px}.queue li b{width:16px}.queue .nm{padding-right:8px}.queue small{font-size:12px}table{font-size:14px}th,td{padding:8px 6px}.bar span{width:40px}.side .nm{font-size:15px}}
+
+/* ไฟเมื่อชนะติด 5 (เลือกแบบด้วย data-fire บน html) */
+.nm.fire{isolation:isolate}
+[data-fire="1"] .nm.fire::after,[data-fire="2"] .nm.fire::after{content:"";position:absolute;inset:calc(var(--bw,0px)*-1);border:inherit;border-radius:inherit;background:inherit;z-index:-1;pointer-events:none}
+[data-skin=pop] .nm{--bw:2px}
+.fb{display:none}
+@property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+/* แบบ 1 เปลวไฟลุก */
+[data-fire="1"] .nm.fire{box-shadow:0 0 0 2px #ff7a00,0 0 14px 2px rgba(255,90,0,.7)}
+[data-fire="1"] .nm.fire::before{content:"";position:absolute;inset:-22px -4px 45%;background:linear-gradient(to top,#ff3d00 0,#ff7a00 35%,#ffb800 65%,#ffe680 100%);clip-path:polygon(0 100%,0 62%,7% 38%,13% 56%,21% 14%,30% 50%,39% 0,49% 44%,58% 6%,67% 46%,76% 16%,85% 52%,93% 30%,100% 60%,100% 100%);z-index:-2;transform-origin:50% 100%;animation:burn .32s steps(1) infinite;filter:drop-shadow(0 0 4px rgba(255,120,0,.8))}
+@keyframes burn{0%{clip-path:polygon(0 100%,0 62%,7% 38%,13% 56%,21% 14%,30% 50%,39% 0,49% 44%,58% 6%,67% 46%,76% 16%,85% 52%,93% 30%,100% 60%,100% 100%)}50%{clip-path:polygon(0 100%,0 58%,6% 30%,14% 52%,22% 22%,31% 44%,40% 8%,50% 40%,59% 0,68% 42%,77% 10%,86% 46%,94% 36%,100% 56%,100% 100%)}}
+/* แบบ 2 ไฟวิ่งรอบกรอบ */
+[data-fire="2"] .nm.fire::before{content:"";position:absolute;inset:-6px;border-radius:99px;background:conic-gradient(from var(--ang),#ff3d00,#ffb800,#fff3b0,#ff7a00,#ff3d00,#ffb800,#ff3d00);z-index:-2;animation:spin 1.1s linear infinite;filter:drop-shadow(0 0 6px rgba(255,110,0,.8))}
+@keyframes spin{to{--ang:360deg}}
+/* แบบ 3 ป้ายไฟพร้อมตัวเลข */
+[data-fire="3"] .nm.fire{box-shadow:0 0 0 2px #ff5a00;animation:pulse 1.2s ease-in-out infinite}
+[data-fire="3"] .fb{display:inline-flex;align-items:center;gap:2px;position:absolute;right:-12px;top:-13px;background:linear-gradient(180deg,#ffb800,#ff3d00);color:#fff;border:2px solid #111;border-radius:99px;padding:0 6px 0 4px;font:700 12px/18px Mitr,Prompt,sans-serif;z-index:2}
+[data-fire="3"] .fb svg{width:9px;height:12px;fill:#fff3b0}
+[data-fire="3"] .nm.fire .spk{display:none}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px #ff5a00,0 0 0 0 rgba(255,90,0,.6)}50%{box-shadow:0 0 0 2px #ff5a00,0 0 16px 4px rgba(255,90,0,.7)}}
+/* 3 ขนไก่ป๊อป */
+:root[data-skin=pop]:not(#z){color-scheme:light;--bg:#cfe7ff;--ink:#111;--card:#fff;--line:#111;--mut:#39424d;--note:#fff1b8;--court:#17a673;--courtd:#0f8a5e;--a:#ff5d3a;--b:#3a6bff;--hi:#ffd23f}
+[data-skin=pop] body{font-family:Mitr,sans-serif;font-weight:300}
+[data-skin=pop] h1,[data-skin=pop] h2,[data-skin=pop] .brand,[data-skin=pop] .court header b,[data-skin=pop] .opt b,[data-skin=pop] .qcol h3,[data-skin=pop] .timer,[data-skin=pop] b,[data-skin=pop] .btn,[data-skin=pop] .step output{font-family:Mitr,sans-serif;font-weight:500}
+[data-skin=pop] .top{background:var(--hi);color:#111;border-bottom:2.5px solid #111}
+[data-skin=pop] .brand svg path:first-of-type{fill:#fff;stroke:#111;stroke-width:1.5}
+[data-skin=pop] .top .btn{background:#fff;color:#111;border:2px solid #111;box-shadow:2px 2px 0 #111}
+[data-skin=pop] .top .endb{background:var(--a);color:#fff}
+[data-skin=pop] .court,[data-skin=pop] .card,[data-skin=pop] .queue li,[data-skin=pop] .plist li,[data-skin=pop] .hist li,[data-skin=pop] table,[data-skin=pop] .opt button{border:2.5px solid #111;box-shadow:4px 4px 0 #111;border-radius:16px}
+[data-skin=pop] .queue li.next{background:var(--hi);box-shadow:4px 4px 0 #111}
+[data-skin=pop] .opt button.on{background:var(--hi)}
+[data-skin=pop] .btn{border:2px solid #111;box-shadow:3px 3px 0 #111;transition:transform .08s,box-shadow .08s}
+[data-skin=pop] .btn:active,[data-skin=pop] .mini:active,[data-skin=pop] .round:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #111}
+[data-skin=pop] .btn.ghost{background:#fff}
+[data-skin=pop] .mini,[data-skin=pop] .round{background:#fff;border:2px solid #111;box-shadow:2px 2px 0 #111}
+[data-skin=pop] .floor{border:2.5px solid #111;border-radius:12px;background:var(--court);box-shadow:inset 0 0 0 9px var(--court),inset 0 0 0 12px #fff}
+[data-skin=pop] .net{background:repeating-linear-gradient(180deg,#111 0 4px,#fff 4px 8px)}
+[data-skin=pop] .nm{background:#fff;border:2px solid #111}
+[data-skin=pop] .side .nm{background:#fff;color:#111}
+[data-skin=pop] .hint{color:#fff;opacity:1;font-weight:400}
+[data-skin=pop] .g{border:2px solid #111}
+[data-skin=pop] .timer{background:var(--hi);color:#111;border:2.5px solid #111;box-shadow:2px 2px 0 #111}
+[data-skin=pop] .timer.long{background:var(--a);color:#fff}
+[data-skin=pop] .crown{border:2px solid #111}
+[data-skin=pop] .tag{background:var(--hi);color:#111;border:1.5px solid #111}
+[data-skin=pop] .tabs{background:#fff;border-top:2.5px solid #111}
+[data-skin=pop] .tabs button{color:#111}
+[data-skin=pop] .tabs button.on{background:var(--hi);color:#111;box-shadow:none}
+[data-skin=pop] .seg{border:2px solid #111;background:#fff}
+[data-skin=pop] .seg button.on{background:#111;color:#fff}
+[data-skin=pop] .add input{border:2px solid #111;background:#fff}
+[data-skin=pop] .sw{border:2px solid #111}
+[data-skin=pop] .note{border:2px solid #111}
+[data-skin=pop] .modal .card{box-shadow:6px 6px 0 #111}
+[data-skin=pop] .toast{background:#111;color:var(--hi)}
+[data-skin=pop] .bar i{background:var(--a)}
+[data-skin=pop] .bar span{border:1.5px solid #111}
+[data-skin=pop] .scroll{padding:2px 8px 10px 2px;margin:-2px -8px -10px -2px}
+
+[data-skin=pop] .glist li{border:2px solid #111}
+[data-skin=pop] .glist li.cur{background:var(--hi);box-shadow:3px 3px 0 #111}
+[data-skin=pop] .shp{background:var(--hi);color:#111}
+[data-skin=pop] .num{border:2px solid #111;background:#fff}
+[data-skin=pop] .shsum h3{font-family:Mitr,sans-serif;font-weight:500}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="20" r="4.5" fill="#ffd84d"/><path d="M8.5 18 4 4h18l-4.5 14z" fill="#fff" opacity=".92"/><path d="M9 6l3 11M13 5v12M17 6l-3 11" stroke="#1d7a4f" stroke-width="1.2"/></svg><button class="gbtn" id="gbtn" aria-label="เลือกก๊วน"><span id="gname">จัดคู่แบด</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+  <button class="btn" id="inst" hidden>ติดตั้งแอป</button><button class="btn endb" data-act="end">จบการแข่งขัน</button><button class="btn icon" id="undo" aria-label="ย้อนกลับ" title="ย้อนกลับ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+</header>
+<main id="app"></main>
+<nav class="tabs" id="tabs">
+  <button data-tab="courts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16M3 12h18"/></svg>สนาม</button>
+  <button data-tab="players"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-4 3.4-6 6.5-6s5.7 2 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14c3 0 5 2 5.5 5"/></svg>ผู้เล่น</button>
+  <button data-tab="score"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>สกอร์</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>ตั้งค่า</button>
+</nav>
+<div class="modal" id="modal"><div class="card"><p id="mmsg"></p><div class="row"><button class="btn ghost" id="mno">ยกเลิก</button><button class="btn" id="mok">ยืนยัน</button></div></div></div>
+<div class="modal" id="grp"><div class="card sumcard" id="grpbody"></div></div>
+<div class="modal" id="sum"><div class="card sumcard" id="sumbody"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+{
+const KEY='badpair-v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+let S,undo=[],addG='A',editId=null,mfn=null,tt=null;
+const blank=()=>({players:[],courts:[],history:[],clock:1,seq:1,tab:'courts',settings:{mode:'king',maxWins:2,courts:2,balance:true,sameDiff:5,timeWarn:15,scoreMode:'points',topPts:10,minusMax:5,minG:3},sessions:[],shTotal:0});
+function addP(s,name,g){s.players.push({id:s.seq++,name,g,active:true,games:0,wins:0,lp:null,lo:[],par:{},opp:{},q:s.clock++})}
+function sample(){const s=blank();['ต้น','บอย','เอ็ม','ปอนด์','กอล์ฟ','บีม','โอ๊ต'].forEach(n=>addP(s,n,'A'));['มิ้นท์','แพร','ฝน','นุ่น','จูน'].forEach(n=>addP(s,n,'B'));s.sample=true;return s}
+// ก๊วน: แต่ละก๊วนเก็บข้อมูลแยกกันทั้งหมด (ผู้เล่น สกอร์ คะแนน การตั้งค่า)
+const GKEY=KEY+'-groups';let G=null,gEdit=null;
+const skey=id=>id==='main'?KEY:KEY+'-g-'+id;
+function loadG(){try{G=JSON.parse(localStorage.getItem(GKEY))}catch(e){G=null}if(!G||!Array.isArray(G.list)||!G.list.length)G={cur:'main',list:[{id:'main',name:'ก๊วนหลัก'}]};if(!G.list.some(g=>g.id===G.cur))G.cur=G.list[0].id}
+function saveG(){try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}}
+const gName=()=>(G.list.find(g=>g.id===G.cur)||{}).name||'จัดคู่แบด';
+function load(id){try{const t=localStorage.getItem(skey(id||G.cur));if(t)return JSON.parse(t)}catch(e){}return null}
+function save(){try{localStorage.setItem(skey(G.cur),JSON.stringify(S))}catch(e){}}
+function openState(){const x=load();if(!x){S=G.cur==='main'?sample():blank();syncCourts();if(S.sample)autofill()}
+  else{S=x;S.settings=Object.assign(blank().settings,S.settings);if(!S.sessions)S.sessions=[];if(S.shTotal==null)S.shTotal=0;S.courts.forEach(c=>{if(c.t1&&!c.start)c.start=Date.now()});syncCourts()}}
+function switchGroup(id){if(id===G.cur){closeGrp();return}save();const tab=S.tab;G.cur=id;saveG();undo=[];editId=null;openState();S.tab=tab;closeGrp();commit();toast('เปิดก๊วน '+gName())}
+function grpHTML(){return `<h2 style="margin:0 0 4px">ก๊วน</h2><p class="sub">แต่ละก๊วนแยกผู้เล่น สกอร์ คะแนนสะสม และการตั้งค่าออกจากกันทั้งหมด</p>
+  <ul class="glist">${G.list.map(g=>{const x=g.id===G.cur?S:load(g.id),n=x&&x.players?x.players.length:0,cur=g.id===G.cur;
+    return g.id===gEdit?`<li><form class="ren" id="grenf" data-g="${esc(g.id)}"><input id="gren" value="${esc(g.name)}" maxlength="30" aria-label="ชื่อก๊วน" autocomplete="off"><button class="btn">บันทึก</button><button class="btn ghost" type="button" data-act="grencancel">ยกเลิก</button></form></li>`
+    :`<li class="${cur?'cur':''}"><button class="gopen" data-act="gopen" data-g="${esc(g.id)}"><b>${esc(g.name)}</b><small>${n} คน${cur?' · ใช้อยู่':''}</small></button><span class="acts"><button class="mini" data-act="gren" data-g="${esc(g.id)}">แก้ชื่อ</button>${G.list.length>1?`<button class="mini del" data-act="gdel" data-g="${esc(g.id)}">ลบ</button>`:''}</span></li>`}).join('')}</ul>
+  <form class="add" id="gnewf" style="margin-top:14px"><input id="gnew" placeholder="ชื่อก๊วนใหม่ เช่น ก๊วนวันพุธ" maxlength="30" autocomplete="off" aria-label="ชื่อก๊วนใหม่"><button class="btn">สร้างก๊วน</button></form>
+  <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn ghost" data-act="gclose">ปิด</button></div>`}
+function openGrp(){gEdit=null;$('#grpbody').innerHTML=grpHTML();$('#grp').classList.add('show')}
+function refreshGrp(){$('#grpbody').innerHTML=grpHTML();const i=$('#gren');if(i){i.focus();i.select()}}
+function closeGrp(){gEdit=null;$('#grp').classList.remove('show')}
+function snap(){undo.push(JSON.stringify(S));if(undo.length>40)undo.shift()}
+const P=id=>S.players.find(p=>p.id===id);
+const busy=()=>new Set(S.courts.flatMap(c=>c.t1?[...c.t1,...c.t2]:[]));
+const queue=()=>{const b=busy();return S.players.filter(p=>p.active&&!b.has(p.id)).sort((a,c)=>a.q-c.q||a.games-c.games)};
+const rate=p=>(p.wins+1)/(p.games+2);
+const typ=t=>t.map(p=>p.g).sort().join('');
+// ข้อ 4: ห้ามคู่เดิมล่าสุด (โทษหนัก) + เคยคู่กันบ่อย
+const pairCost=(a,b)=>(a.lp===b.id||b.lp===a.id?100:0)+(a.par[b.id]||0)*3;
+// ข้อ 7: เจอคู่ตรงข้ามซ้ำ
+function oppCost(t1,t2){let c=0;for(const a of t1)for(const b of t2){c+=(a.opp[b.id]||0)*5;if(a.lo.includes(b.id))c+=12}return c}
+// ข้อ 6: ถ่วงฝีมือจาก %ชนะ ไม่ให้ทีมแข็งรวมกัน
+const bal=(t1,t2)=>S.settings.balance?Math.abs(rate(t1[0])+rate(t1[1])-rate(t2[0])-rate(t2[1]))*25:0;
+const SPL=[[0,1,2,3],[0,2,1,3],[0,3,1,2]];
+const cnt=g=>S.players.filter(p=>p.active&&p.g===g).length;
+// ข้อ 2: AA vs AA / BB vs BB ได้เฉพาะเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ sameDiff คน
+function sameOK(){const d=cnt('A')-cnt('B'),th=S.settings.sameDiff;return d>=th?'AA':-d>=th?'BB':null}
+function pool(){const q=queue(),out=q.slice(0,8);for(const g of ['A','B'])out.push(...q.filter(p=>p.g===g&&!out.includes(p)).slice(0,4));
+  return out.map(p=>({p,r:q.indexOf(p)})).sort((a,b)=>a.r-b.r)}
+function bestMatch(){const q=pool(),n=q.length,same=sameOK();let best=null;
+  for(let a=0;a<n;a++)for(let b=a+1;b<n;b++)for(let c=b+1;c<n;c++)for(let d=c+1;d<n;d++){
+    const f=[q[a].p,q[b].p,q[c].p,q[d].p],rk=(q[a].r+q[b].r+q[c].r+q[d].r)*2;
+    for(const s of SPL){const t1=[f[s[0]],f[s[1]]],t2=[f[s[2]],f[s[3]]],ty=typ(t1);
+      if(ty!==typ(t2)||(ty!=='AB'&&ty!==same))continue;
+      const cost=rk+(ty==='AB'?0:8)+pairCost(...t1)+pairCost(...t2)+oppCost(t1,t2)+bal(t1,t2);
+      if(!best||cost<best.cost)best={cost,t1,t2}}}
+  return best}
+function bestChallenger(stay){const q=pool().filter(x=>!stay.includes(x.p)),ty=typ(stay);let best=null;if(ty!=='AB'&&ty!==sameOK())return null;
+  for(let a=0;a<q.length;a++)for(let b=a+1;b<q.length;b++){const t=[q[a].p,q[b].p];if(typ(t)!==ty)continue;
+    const cost=(q[a].r+q[b].r)*2+pairCost(...t)+oppCost(stay,t)+bal(stay,t);if(!best||cost<best.cost)best={cost,t}}
+  return best}
+function clearC(c){c.t1=null;c.t2=null;c.stay=null;c.streak=0;c.start=null}
+function fill(c){const m=bestMatch();if(!m)return false;c.t1=m.t1.map(p=>p.id);c.t2=m.t2.map(p=>p.id);c.stay=null;c.streak=0;c.start=Date.now();return true}
+function autofill(){S.courts.forEach(c=>{if(!c.t1)fill(c)})}
+function toQueue(ids){ids.forEach(id=>{const p=P(id);if(p)p.q=S.clock++})}
+function front(ids){const q=queue();let m=q.length?Math.min(...q.map(p=>p.q)):0;ids.slice().reverse().forEach(id=>{const p=P(id);if(p)p.q=--m})}
+function syncCourts(){const n=S.settings.courts;
+  while(S.courts.length<n)S.courts.push({no:S.courts.length+1,t1:null,t2:null,stay:null,streak:0});
+  while(S.courts.length>n){const c=S.courts.pop();if(c.t1)front([...c.t1,...c.t2]);if(c.sh)S.courts[S.courts.length-1].sh=(S.courts[S.courts.length-1].sh||0)+c.sh}}
+function record(ci,k){snap();const c=S.courts[ci],T=[c.t1,c.t2],W=T[k].map(P),L=T[1-k].map(P),gsh=c.sh||0;
+  c.sh=0;
+  for(const t of [W,L]){const o=t===W?L:W;t[0].lp=t[1].id;t[1].lp=t[0].id;
+    t[0].par[t[1].id]=(t[0].par[t[1].id]||0)+1;t[1].par[t[0].id]=(t[1].par[t[0].id]||0)+1;
+    for(const p of t){p.games++;p.lo=o.map(x=>x.id);for(const x of o)p.opp[x.id]=(p.opp[x.id]||0)+1}}
+  W.forEach(p=>{p.wins++;p.ws=(p.ws||0)+1});L.forEach(p=>p.ws=0);
+  const hot=W.filter(p=>p.ws===5);
+  const streak=c.stay===k?c.streak+1:1,king=S.settings.mode==='king';
+  S.history.unshift({n:S.history.length+1,c:c.no,sh:gsh,d:c.start?Date.now()-c.start:0,w:W.map(p=>p.name),l:L.map(p=>p.name),st:king?streak:0});
+  let msg;
+  if(king&&streak<S.settings.maxWins){
+    clearC(c);toQueue(L.map(p=>p.id));const ch=bestChallenger(W);
+    if(ch){c.t1=W.map(p=>p.id);c.t2=ch.t.map(p=>p.id);c.stay=0;c.streak=streak;c.start=Date.now();msg=`ผู้ชนะอยู่ต่อ (ชนะติด ${streak}) ผู้แพ้ไปท้ายคิว`}
+    else{toQueue(W.map(p=>p.id));fill(c);msg='ไม่มีคู่ท้าชิงกลุ่มตรงกัน จึงจัดใหม่ทั้งสนาม'}
+  }else{clearC(c);toQueue(L.map(p=>p.id));toQueue(W.map(p=>p.id));fill(c);
+    msg=king?`ชนะติด ${streak} ครั้ง ออกทั้ง 2 คู่`:'จบเกม ออกทั้ง 2 คู่'}
+  if(!c.t1)msg+=' · คนรอไม่พอสำหรับสนามนี้';
+  if(hot.length)msg=`${hot.map(p=>p.name).join(' + ')} ชนะติด 5 เกม ติดไฟแล้ว! · `+msg;
+  autofill();commit();toast(msg)}
+function cancelGame(ci){snap();const c=S.courts[ci],ids=[...c.t1,...c.t2];clearC(c);front(ids);commit();toast('ยกเลิกเกมแล้ว ผู้เล่นกลับไปหัวคิว')}
+const fmt=ms=>{const t=Math.max(0,Math.floor(ms/1000)),h=Math.floor(t/3600),m=Math.floor(t%3600/60),x=t%60,z=n=>String(n).padStart(2,'0');return (h?h+':'+z(m):z(m))+':'+z(x)};
+function tick(){const now=Date.now(),lim=S.settings.timeWarn*60000;document.querySelectorAll('.tm').forEach(e=>{const d=now-(+e.dataset.s);e.textContent=fmt(d);e.parentNode.classList.toggle('long',lim>0&&d>=lim)})}
+setInterval(tick,1000);
+let TOP={};const OPEN={match:false,score:false,clear:false};
+document.addEventListener('toggle',e=>{const d=e.target;if(d.classList&&d.classList.contains('sect'))OPEN[d.dataset.sec]=d.open},true);
+document.addEventListener('badpair:render',()=>render());
+function calcTop(){TOP={};standings().rows.forEach(o=>{if(o.rank<=3)TOP[o.p.id]=o.rank})}
+const CROWN='<svg class="cw" viewBox="0 0 24 18" aria-hidden="true"><path d="M2.5 16 1.5 5l6 4.2L12 1.8l4.5 7.4 6-4.2-1 11z"/><circle cx="12" cy="11" r="1.7"/><circle cx="6.5" cy="12" r="1.2"/><circle cx="17.5" cy="12" r="1.2"/></svg>';
+const FLAME='<svg viewBox="0 0 12 16" aria-hidden="true"><path d="M6 .5C7 4 11 5.5 11 10a5 5 0 0 1-10 0c0-2.4 1.4-3.6 2.4-4.6C3.6 7 4.4 8 5.4 8 4.6 5.4 5 2.6 6 .5z"/></svg>';
+const isHot=p=>(p.ws||0)>=5;
+function chip(p,rk){if(!p)return '';if(rk===undefined)rk=TOP[p.id]||0;const hot=isHot(p),n=Math.max(p.ws||0,5);const t=['','อันดับ 1','อันดับ 2','อันดับ 3'][rk]||'';
+  return `<span class="nm${rk?' rk'+rk:''}${hot?' fire':''}"${t?` title="${t}"`:''}><i class="g ${p.g}">${p.g}${rk?CROWN:''}</i><span class="tx">${esc(p.name)}</span>${rk===1?'<b class="spk" aria-hidden="true">✦</b>':''}${hot?`<b class="fb" title="ชนะติด ${n} เกม">${FLAME}${n}</b>`:''}</span>`}
+const SHI='<svg class="shi" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="20" r="4.5" fill="#ffd84d" stroke="#111" stroke-width="1.2"/><path d="M8.5 17.5 4 4h18l-4.5 13.5z" fill="#fff" stroke="#111" stroke-width="1.2"/><path d="M9.5 6l3 11M13 5v12M16.5 6l-3 11" stroke="#111" stroke-width="1"/></svg>';
+const shRow=(c,i)=>`<div class="shrow"><span class="shc">${SHI}<b>${c.sh||0}</b> ลูก${c.t1?'เกมนี้':' (รอเกมถัดไป)'}</span><button class="mini" data-act="shm" data-c="${i}" ${c.sh>0?'':'disabled'} aria-label="ลดลูกแบด">−</button><button class="btn shp" data-act="shp" data-c="${i}">+ ลูกแบด</button></div>`;
+function courtHTML(c,i){const king=S.settings.mode==='king',max=S.settings.maxWins;
+  if(!c.t1){const ok=!!bestMatch();return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">ว่าง</span></header><div class="floor idle"><button class="btn light" data-act="fill" data-c="${i}" ${ok?'':'disabled'}>${ok?'จัดคู่ลงสนาม':'คนรอไม่พอ หรือกลุ่มยังไม่ลงตัว'}</button></div>${shRow(c,i)}</article>`}
+  const side=(t,k)=>`<button class="side" data-act="win" data-c="${i}" data-k="${k}">${king&&c.stay===k?`<span class="crown">ชนะติด ${c.streak}/${max}</span>`:''}${t.map(id=>chip(P(id))).join('')}<span class="hint">แตะเมื่อฝั่งนี้ชนะ</span></button>`;
+  return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">${typ(c.t1.map(P))} vs ${typ(c.t2.map(P))}</span><button class="link" data-act="cancel" data-c="${i}">ยกเลิกเกม</button></header><div class="floor"><button class="timer" data-act="treset" data-c="${i}" aria-label="เวลาที่เล่นไป แตะเพื่อเริ่มนับใหม่"><span class="tm" data-s="${c.start||Date.now()}">${fmt(Date.now()-(c.start||Date.now()))}</span></button>${side(c.t1,0)}<div class="net"></div>${side(c.t2,1)}</div>${shRow(c,i)}</article>`}
+function vCourts(){const q=queue(),king=S.settings.mode==='king';
+  return `<section class="band"><h1>สนาม</h1><p class="sub">${S.players.filter(p=>p.active).length} คนมาเล่น · รอ ${q.length} คน · ${king?`แพ้ออก (ชนะติด ${S.settings.maxWins} ออกทั้งคู่)`:'เล่น 1 เกม ออกทั้งคู่'} · ลูกแบดวันนี้ ${S.shTotal||0} ลูก</p>
+  ${S.sample?'<p class="note">กำลังแสดงรายชื่อตัวอย่าง แก้ไขได้ที่แท็บ “ผู้เล่น” หรือล้างที่ “ตั้งค่า”</p>':''}
+  <div class="courts">${S.courts.map(courtHTML).join('')}</div>
+  <h2>คิวรอ</h2><div class="qcols">${['A','B'].map(g=>{const l=q.filter(p=>p.g===g);return `<div class="qcol"><h3><i class="g ${g}">${g}</i>กลุ่ม ${g}<small>${l.length} คน</small></h3>${l.length?`<ol class="queue">${l.map((p,i)=>`<li class="${i<2?'next':''}"><b>${i+1}</b>${chip(p)}<small>${p.games} เกม</small></li>`).join('')}</ol>`:'<p class="empty-note">ไม่มีคนรอ</p>'}</div>`}).join('')}</div>
+  <p class="sub" style="margin-top:10px">กรอบเขียว = ใกล้ได้ลงสนาม · เรียงตามเวลาที่รอ</p></section>`}
+function vPlayers(){const ps=S.players,b=busy(),nA=ps.filter(p=>p.g==='A'&&p.active).length,nB=ps.filter(p=>p.g==='B'&&p.active).length,ex=nA>nB?'A':'B';
+  return `<section class="band"><h1>ผู้เล่น</h1><p class="sub">มาเล่น: กลุ่ม A ${nA} คน · กลุ่ม B ${nB} คน${nA!==nB?` — ${ex} มากกว่า ${Math.abs(nA-nB)} คน ${Math.abs(nA-nB)>=S.settings.sameDiff?`จึงจัด ${ex}${ex} vs ${ex}${ex} ได้`:`(ต้องต่างกันตั้งแต่ ${S.settings.sameDiff} คน จึงจะจัด ${ex}${ex} vs ${ex}${ex})`}`:''}</p>
+  <form id="addf" class="card add"><input id="nm" placeholder="ชื่อ (หลายคนคั่นด้วย , )" autocomplete="off" aria-label="ชื่อผู้เล่น"><div class="seg">${['A','B'].map(g=>`<button type="button" class="${addG===g?'on':''}" data-act="addg" data-g="${g}">กลุ่ม ${g}</button>`).join('')}</div><button class="btn">เพิ่ม</button></form>
+  ${ps.length?`<div class="plhead"><b>รายชื่อ ${ps.length} คน</b><button class="mini" data-act="sortg">รีเซ็ตเรียง A → B</button></div><ul class="plist">${ps.map(p=>p.id===editId?`<li><form class="ren" id="renf" data-id="${p.id}"><i class="g ${p.g}">${p.g}</i><input id="ren" value="${esc(p.name)}" maxlength="30" aria-label="ชื่อใหม่" autocomplete="off"><button class="btn">บันทึก</button><button class="btn ghost" type="button" data-act="rencancel">ยกเลิก</button></form></li>`:`<li class="${p.active?'':'off'}">${chip(p)}<small>${b.has(p.id)?'อยู่ในสนาม':p.active?'พร้อมเล่น':'พัก'}</small><span class="acts"><button class="mini" data-act="ren" data-id="${p.id}">แก้ชื่อ</button><button class="mini" data-act="grp" data-id="${p.id}">ย้ายไป ${p.g==='A'?'B':'A'}</button><button class="mini" data-act="act" data-id="${p.id}">${p.active?'พัก':'กลับมาเล่น'}</button><button class="mini del" data-act="del" data-id="${p.id}">ลบ</button></span></li>`).join('')}</ul>`:'<p class="empty-note">ยังไม่มีผู้เล่น เพิ่มชื่อด้านบนได้เลย</p>'}</section>`}
+function ranked(){return S.players.filter(p=>p.games).sort((a,b)=>b.wins/b.games-a.wins/a.games||b.wins-a.wins||b.games-a.games)}
+// คะแนนจากอันดับ: อันดับ 1 = P, อันดับ 2 = P-3 ไล่ลงจนอันดับกลาง = 0, ใต้กลางลบไล่ถึง -Q
+function standings(){const s=S.settings,el=S.players.filter(p=>p.games>=s.minG).sort((a,b)=>b.wins/b.games-a.wins/a.games||b.wins-a.wins),N=el.length,M=Math.ceil(N/2),P=s.topPts,Q=s.minusMax,on=s.scoreMode==='points'&&N>=4;
+  const raw=r=>r===M?0:r<M?(r===1?P:(P-3)*(M-r)/(M-2)):-Q*(r-M)/(N-M);
+  const rows=[];let i=0;
+  while(i<N){const a=el[i];let j=i;while(j+1<N&&el[j+1].wins*a.games===a.wins*el[j+1].games&&el[j+1].wins===a.wins)j++;
+    let sum=0;for(let k=i+1;k<=j+1;k++)sum+=raw(k);const pt=on?Math.round(sum/(j-i+1))+0:null;
+    for(let k=i;k<=j;k++)rows.push({p:el[k],rank:i+1,pt});i=j+1}
+  return {rows,on,low:S.players.filter(p=>p.games>0&&p.games<s.minG)}}
+const sgn=n=>n==null?'–':n>0?'+'+n:String(n);
+const pcls=n=>n>0?'pos':n<0?'neg':'';
+const pct=p=>Math.round(p.wins/p.games*100);
+function todayTable(st,extra){const pm=S.settings.scoreMode==='points';
+  const row=(o,low)=>`<tr><td class="n">${low?'–':o.rank}</td><td>${chip(o.p)}</td><td class="n">${o.p.wins}/${o.p.games}</td><td class="n"><div class="bar"><span><i style="width:${pct(o.p)}%"></i></span>${pct(o.p)}%</div></td>${pm?`<td class="n ${pcls(o.pt)}">${low?'ไม่ถึง '+S.settings.minG+' เกม':sgn(o.pt)}</td>`:''}${extra?`<td class="n"><b>${sgn((o.p.pts||0)+(o.pt||0))}</b></td>`:''}</tr>`;
+  return `<div class="scroll"><table><thead><tr><th class="n">#</th><th>ชื่อ</th><th class="n">ชนะ</th><th class="n">%</th>${pm?'<th class="n">คะแนน</th>':''}${extra?'<th class="n">สะสม</th>':''}</tr></thead><tbody>${st.rows.map(o=>row(o)).join('')}${st.low.map(p=>row({p,pt:null},1)).join('')}</tbody></table></div>`}
+function vScore(){const st=standings(),pm=S.settings.scoreMode==='points',has=st.rows.length+st.low.length,season=S.players.filter(p=>p.days).sort((a,b)=>(b.pts||0)-(a.pts||0)||b.days-a.days);
+  return `<section class="band"><h1>สกอร์บอร์ด</h1><p class="sub">${S.history.length} เกมวันนี้ · ${pm?'โหมดนับคะแนน — คะแนนคือ “ถ้าจบตอนนี้”':'โหมดไม่นับคะแนน — ดูแค่ % ชนะ'}</p>
+  ${has?`${todayTable(st)}${pm&&!st.on?`<p class="note" style="margin-top:12px">ต้องมีผู้เล่นที่เล่นครบ ${S.settings.minG} เกมอย่างน้อย 4 คน จึงจะคิดคะแนน</p>`:''}
+  <p style="display:flex;flex-wrap:wrap;gap:10px"><button class="btn ghost" data-act="copy">คัดลอกสกอร์ไปแชร์</button></p>`:'<p class="empty-note">ยังไม่มีผลการแข่ง บันทึกผลจากแท็บ “สนาม”</p>'}
+  ${season.length?`<h2>คะแนนสะสม</h2><div class="scroll"><table><thead><tr><th class="n">อันดับ</th><th>ชื่อ</th><th class="n">วันที่นับคะแนน</th><th class="n">คะแนนสะสม</th></tr></thead><tbody>${season.map((p,i)=>`<tr><td class="n">${i+1}</td><td>${chip(p,i<3&&(p.pts||0)>0?i+1:0)}</td><td class="n">${p.days}</td><td class="n ${pcls(p.pts||0)}"><b>${sgn(p.pts||0)}</b></td></tr>`).join('')}</tbody></table></div>`:''}
+  ${S.sessions.length?`<h2>การแข่งขันที่ผ่านมา</h2>${S.sessions.map((x,i)=>{const pm=x.mode==='points',sh=x.sh>0;return `<details class="card sess"${i===0?' open':''}><summary><span><b>${esc(x.date)}</b><small>${x.games} เกม · ${pm?'นับคะแนน':'ไม่นับคะแนน'}${sh?` · ลูกแบด ${x.sh} ลูก`:''}</small></span></summary>
+  <div class="scroll"><table><thead><tr><th class="n">#</th><th>ชื่อ</th><th class="n">ชนะ</th><th class="n">%</th>${pm?'<th class="n">คะแนน</th>':''}</tr></thead><tbody>${x.rows.map(o=>`<tr><td class="n">${o.rank||'–'}</td><td>${esc(o.n)} <small>(${o.g})</small></td><td class="n">${o.w}/${o.gm}</td><td class="n">${Math.round(o.w/o.gm*100)}%</td>${pm?`<td class="n ${pcls(o.pt)}">${sgn(o.pt)}</td>`:''}</tr>`).join('')}</tbody></table></div>
+  <p style="margin:4px 0 12px"><button class="btn ghost" data-act="scopy" data-i="${i}">คัดลอกผลวันนี้ไปแชร์</button></p></details>`}).join('')}`:''}
+  ${S.history.length?`<h2>ประวัติเกมวันนี้</h2><ul class="hist">${S.history.slice(0,40).map(h=>`<li>เกม ${h.n} · สนาม ${h.c}: <em>${h.w.map(esc).join(' + ')}</em> ชนะ ${h.l.map(esc).join(' + ')}${h.st>1?` (ชนะติด ${h.st})`:''}${h.d?` · ${fmt(h.d)}`:''}${h.sh?` · ลูก ${h.sh}`:''}</li>`).join('')}</ul>`:''}</section>`}
+const fx=n=>String(Math.round(n*100)/100);
+function sessText(x){const pm=x.mode==='points';return `สรุปแบด ${x.grp||gName()} ${x.date} (${x.games} เกม)\n`+x.rows.filter(o=>o.rank).map(o=>`${o.rank}. ${o.n} (${o.g}) ${o.w}/${o.gm} = ${Math.round(o.w/o.gm*100)}%${pm?' · '+sgn(o.pt)+' คะแนน':''}`).join('\n')+(x.rows.some(o=>!o.rank)?'\nเล่นไม่ถึงเกมขั้นต่ำ: '+x.rows.filter(o=>!o.rank).map(o=>`${o.n} ${o.w}/${o.gm}`).join(', '):'')+(x.sh?`\nลูกแบด ${x.sh} ลูก`:'')}
+function summaryText(){const st=standings(),pm=st.on;return `สรุปแบด ${gName()} ${new Date().toLocaleDateString('th-TH')} (${S.history.length} เกม)\n`+st.rows.map(o=>`${o.rank}. ${o.p.name} (${o.p.g}) ${o.p.wins}/${o.p.games} = ${pct(o.p)}%${pm?' · '+sgn(o.pt)+' คะแนน':''}`).join('\n')+(st.low.length?`\nเล่นไม่ถึง ${S.settings.minG} เกม: `+st.low.map(p=>`${p.name} ${p.wins}/${p.games}`).join(', '):'')}
+function openSummary(){calcTop();const st=standings(),pm=S.settings.scoreMode==='points';
+  $('#sumbody').innerHTML=`<h2 style="margin:0 0 4px">สรุปการแข่งขัน</h2><p class="sub">${new Date().toLocaleDateString('th-TH',{dateStyle:'long'})} · ${S.history.length} เกม · ${pm?(st.on?'นับคะแนน':'ผู้เล่นไม่พอ จะไม่นับคะแนน'):'ไม่นับคะแนน'}</p>
+  ${todayTable(st,st.on)}
+  <p class="sub" style="margin-top:12px">กด “บันทึกและเริ่มวันใหม่” แล้ว${st.on?'คะแนนจะถูกรวมเข้าคะแนนสะสม ':''}สกอร์วันนี้จะถูกล้าง รายชื่อยังอยู่ ผลจะเก็บไว้ใน “การแข่งขันที่ผ่านมา”</p>
+  <div class="row" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end"><button class="btn ghost" data-act="sumclose">กลับ</button><button class="btn ghost" data-act="copy">คัดลอกสรุป</button><button class="btn" data-act="sumsave">บันทึกและเริ่มวันใหม่</button></div>`;
+  $('#sum').classList.add('show')}
+function resetDay(){S.players.forEach(x=>Object.assign(x,{games:0,wins:0,ws:0,lp:null,lo:[],par:{},opp:{}}));S.courts.forEach(c=>{clearC(c);c.sh=0});S.history=[];S.shTotal=0}
+function saveDay(){snap();const st=standings();
+  S.sessions.unshift({date:new Date().toLocaleDateString('th-TH',{dateStyle:'medium'}),mode:st.on?'points':'plain',games:S.history.length,sh:S.shTotal||0,
+    rows:[...st.rows.map(o=>({n:o.p.name,g:o.p.g,w:o.p.wins,gm:o.p.games,rank:o.rank,pt:o.pt})),...st.low.map(p=>({n:p.name,g:p.g,w:p.wins,gm:p.games,rank:null,pt:null}))],grp:gName()});
+  if(S.sessions.length>60)S.sessions.length=60;
+  if(st.on)st.rows.forEach(o=>{o.p.pts=(o.p.pts||0)+o.pt;o.p.days=(o.p.days||0)+1});
+  resetDay();$('#sum').classList.remove('show');S.tab='score';commit();scrollTo(0,0);const h=[...document.querySelectorAll('h2')].find(e=>e.textContent==='การแข่งขันที่ผ่านมา');if(h)h.scrollIntoView({block:'start'});toast(st.on?'จบการแข่งขันแล้ว รวมคะแนนเข้าคะแนนสะสม':'จบการแข่งขันแล้ว')}
+function previewPts(N){const s=S.settings,M=Math.ceil(N/2),P=s.topPts,Q=s.minusMax;return [...Array(N)].map((_,i)=>{const r=i+1,v=Math.round(r===M?0:r<M?(r===1?P:(P-3)*(M-r)/(M-2)):-Q*(r-M)/(N-M))+0;return (v>0?'+':'')+v}).join(' ')}
+function vSettings(){const s=S.settings,pm=s.scoreMode==='points';
+  return `<section class="band"><h1>ตั้งค่า</h1><p class="sub">แตะหัวข้อเพื่อเปิดดู · ปรับได้ระหว่างเล่น มีผลตั้งแต่เกมถัดไป</p><div class="set">
+  <details class="card sect" data-sec="match" ${OPEN.match?'open':''}><summary><span><b>การจับคู่</b><small>${s.mode==='king'?'แพ้ออก · ชนะติด '+s.maxWins+' ออก':'เล่น 1 เกม ออกทั้งคู่'} · ${s.courts} สนาม</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
+  <div class="opt"><button class="${s.mode==='king'?'on':''}" data-act="mode" data-m="king"><b>แพ้ออก</b><span>ผู้ชนะอยู่ต่อ ชนะติดครบกำหนดออกทั้ง 2 คู่</span></button><button class="${s.mode==='one'?'on':''}" data-act="mode" data-m="one"><b>เล่น 1 เกม ออกทั้งคู่</b><span>จบเกมแล้วทั้ง 4 คนกลับเข้าคิว</span></button></div>
+  ${s.mode==='king'?`<div class="card step"><span>ชนะติดกี่ครั้งต้องออก</span><div><button class="round" data-act="mw" data-d="-1" aria-label="ลด">−</button><output>${s.maxWins}</output><button class="round" data-act="mw" data-d="1" aria-label="เพิ่ม">+</button></div></div>`:''}
+  <div class="card step"><span>จัด AA vs AA / BB vs BB เมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ (คน)<br><small style="color:var(--mut)">ค่าเริ่มต้น 5 = มากกว่าเกิน 4 คน</small></span><div><button class="round" data-act="sd" data-d="-1" aria-label="ลด">−</button><output>${s.sameDiff}</output><button class="round" data-act="sd" data-d="1" aria-label="เพิ่ม">+</button></div></div>
+  <div class="card step"><span>เตือนเมื่อเล่นนานเกิน (นาที)<br><small style="color:var(--mut)">ตัวจับเวลาบนสนามเปลี่ยนเป็นสีส้ม · 0 = ไม่เตือน</small></span><div><button class="round" data-act="tw" data-d="-5" aria-label="ลด">−</button><output>${s.timeWarn}</output><button class="round" data-act="tw" data-d="5" aria-label="เพิ่ม">+</button></div></div>
+  <div class="card step"><span>จำนวนสนาม</span><div><button class="round" data-act="ct" data-d="-1" aria-label="ลด">−</button><output>${s.courts}</output><button class="round" data-act="ct" data-d="1" aria-label="เพิ่ม">+</button></div></div>
+  <div class="card step"><span>ถ่วงฝีมือจาก % ชนะ<br><small style="color:var(--mut)">ไม่ให้คนเก่งจับคู่กันจนชนะยาว</small></span><button class="sw ${s.balance?'on':''}" data-act="bal" aria-label="ถ่วงฝีมือ" aria-pressed="${s.balance}"></button></div>
+  <div class="card"><details><summary>ระบบจัดคู่ทำงานอย่างไร</summary><ol>
+  <li>แบ่งผู้เล่นเป็นกลุ่ม A และ B (ย้ายกลุ่มเองได้ในแท็บผู้เล่น ระบบไม่ย้ายให้)</li>
+  <li>จับ A คู่กับ B เสมอ จะจัด AA vs AA หรือ BB vs BB ก็ต่อเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ ${s.sameDiff} คน (นับเฉพาะคนที่มาเล่น ไม่นับคนพัก) และไม่มีการจับ AA เจอ AB</li>
+  <li>คนที่รอนานสุดได้ลงก่อน คิวเรียงตามเวลาออกจากสนาม</li>
+  <li>ห้ามจับคู่ซ้ำกับคู่ล่าสุด และลดโอกาสคู่ที่เคยจับบ่อย</li>
+  <li>ลดการเจอคู่ตรงข้ามซ้ำ โดยนับว่าแต่ละคนเคยเจอใครกี่ครั้ง</li>
+  <li>จำกัดจำนวนชนะติดในโหมดแพ้ออก และถ่วงฝีมือให้สองฝั่งสูสี</li></ol></details></div>
+  </div></details>
+  <details class="card sect" data-sec="score" ${OPEN.score?'open':''}><summary><span><b>การนับคะแนน</b><small>${pm?'นับคะแนน · อันดับ 1 ได้ +'+s.topPts+' · ท้ายสุด −'+s.minusMax:'ไม่นับคะแนน ดูแค่ % ชนะ'}</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
+  <div class="opt"><button class="${s.scoreMode==='points'?'on':''}" data-act="smode" data-m="points"><b>นับคะแนน</b><span>จบการแข่งขันแล้วให้คะแนนตามอันดับ % ชนะ รวมเป็นคะแนนสะสม</span></button><button class="${s.scoreMode==='plain'?'on':''}" data-act="smode" data-m="plain"><b>ไม่นับคะแนน</b><span>จับคู่ปกติ ดูแค่ % ชนะ เหมาะกับวันที่คนน้อย</span></button></div>
+  ${s.scoreMode==='points'?`<div class="card step"><span>คะแนนอันดับ 1<br><small style="color:var(--mut)">อันดับ 2 ได้น้อยกว่า 3 แต้ม ไล่ลงจนอันดับกลาง = 0</small></span><div><button class="round" data-act="tp" data-d="-1" aria-label="ลด">−</button><output>${s.topPts}</output><button class="round" data-act="tp" data-d="1" aria-label="เพิ่ม">+</button></div></div>
+  <div class="card step"><span>ลบมากสุด (อันดับสุดท้าย)</span><div><button class="round" data-act="mm" data-d="-1" aria-label="ลด">−</button><output>${s.minusMax}</output><button class="round" data-act="mm" data-d="1" aria-label="เพิ่ม">+</button></div></div>
+  <div class="card step"><span>ต้องเล่นอย่างน้อย (เกม) จึงจัดอันดับ</span><div><button class="round" data-act="mg" data-d="-1" aria-label="ลด">−</button><output>${s.minG}</output><button class="round" data-act="mg" data-d="1" aria-label="เพิ่ม">+</button></div></div>
+  <div class="card"><b>ตัวอย่างคะแนน 12 คน</b><p class="sub" style="margin:6px 0 0">${previewPts(12)}</p></div>`:''}
+  </div></details>
+  <details class="card sect" data-sec="clear" ${OPEN.clear?'open':''}><summary><span><b>ล้างข้อมูล</b><small>ล้างสกอร์ · ล้างชื่อผู้เล่น · ล้างทั้งหมด</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
+  <div class="card clr"><div><b>1. ล้างสกอร์และเริ่มใหม่</b><span>ล้างสกอร์วันนี้และคู่ในสนาม รายชื่อและคะแนนสะสมยังอยู่</span></div><button class="btn ghost" data-act="newday">ล้างสกอร์</button></div>
+  <div class="card clr"><div><b>2. ล้างชื่อผู้เล่น</b><span>ลบรายชื่อผู้เล่นทั้งหมด (สกอร์และคะแนนสะสมของผู้เล่นจะหายไปด้วย)</span></div><button class="btn ghost" data-act="wipeplayers">ล้างชื่อ</button></div>
+  <div class="card clr"><div><b>3. ล้างทั้งหมด</b><span>ล้างสกอร์ คะแนนสะสม ผลการแข่งขันที่ผ่านมา และผู้เล่น (การตั้งค่ายังอยู่)</span></div><button class="btn warn" data-act="wipe">ล้างทั้งหมด</button></div>
+  </div></details>
+  <div class="card"><b>ติดตั้งเป็นแอปบนเครื่อง</b><p class="sub" style="margin:6px 0 0">${installHelp()}</p></div>
+  <div class="card"><b>สำรอง / ย้ายข้อมูลไปเครื่องอื่น</b><p class="sub" style="margin:6px 0 12px">ส่งออกเป็นไฟล์หรือข้อความ แล้วนำเข้าที่อีกเครื่อง ใช้ได้ข้ามระบบ (iPhone ↔ Android ↔ คอมพิวเตอร์)</p>
+  <div style="display:flex;flex-wrap:wrap;gap:10px"><button class="btn ghost" data-act="exp">บันทึกเป็นไฟล์</button><button class="btn ghost" data-act="expc">คัดลอกเป็นข้อความ</button><label class="btn ghost" style="display:inline-flex;align-items:center">นำเข้าจากไฟล์<input type="file" id="impf" accept=".json,application/json,text/plain" hidden></label><button class="btn ghost" data-act="impt">วางข้อความ</button></div>
+  <textarea id="impbox" hidden placeholder="วางข้อความสำรองที่นี่ แล้วกด นำเข้า" style="width:100%;min-height:110px;margin-top:10px;font:14px monospace;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px"></textarea>
+  <button class="btn" id="impgo" data-act="impgo" hidden style="margin-top:8px">นำเข้า</button></div>
+  <p class="sub">ข้อมูลเก็บในเครื่องนี้ ใช้เครื่องเดียวคุมสนามจะดีที่สุด · ใช้งานได้แม้ไม่มีอินเทอร์เน็ต (เมื่อติดตั้งจากเว็บไซต์)</p></div></section>`}
+const views={courts:vCourts,players:vPlayers,score:vScore,settings:vSettings};
+function render(){calcTop();$('#gname').textContent=gName();$('#app').innerHTML=(views[S.tab]||vCourts)();tick();document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===S.tab));$('#undo').disabled=!undo.length}
+function commit(){save();render()}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
+function ask(msg,ok,fn){$('#mmsg').textContent=msg;$('#mok').textContent=ok;mfn=fn;$('#modal').classList.add('show');$('#mok').focus()}
+function closeM(){$('#modal').classList.remove('show');mfn=null}
+$('#mok').addEventListener('click',()=>{const f=mfn;closeM();if(f)f()});
+$('#mno').addEventListener('click',closeM);
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeM()});
+$('#undo').addEventListener('click',()=>{if(!undo.length)return;S=JSON.parse(undo.pop());commit();toast('ย้อนกลับแล้ว')});
+document.addEventListener('submit',e=>{if(e.target.id!=='renf')return;e.preventDefault();const p=P(+e.target.dataset.id),nn=$('#ren').value.trim().slice(0,30);
+  if(!p||!nn){toast('กรุณาใส่ชื่อ');return}if(nn===p.name){editId=null;render();return}
+  if(S.players.some(x=>x!==p&&x.name===nn)){toast('มีชื่อนี้อยู่แล้ว');return}
+  snap();const old=p.name,uniq=!S.players.some(x=>x!==p&&x.name===old),fix=a=>a.map(n=>n===old?nn:n);p.name=nn;
+  if(uniq){S.history.forEach(h=>{h.w=fix(h.w);h.l=fix(h.l)});S.sessions.forEach(x=>x.rows.forEach(o=>{if(o.n===old)o.n=nn}))}
+  editId=null;commit();toast(`เปลี่ยนชื่อ ${old} เป็น ${nn} แล้ว`)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editId!=null){editId=null;render()}});
+document.addEventListener('submit',e=>{if(e.target.id!=='addf')return;e.preventDefault();
+  const names=$('#nm').value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean);if(!names.length)return;
+  snap();names.forEach(n=>addP(S,n.slice(0,30),addG));commit();toast(`เพิ่ม ${names.length} คนในกลุ่ม ${addG}`);$('#nm').focus()});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act],[data-tab]');if(!t||t.closest('#modal'))return;
+  if(t.dataset.tab){editId=null;S.tab=t.dataset.tab;commit();scrollTo(0,0);return}
+  const a=t.dataset.act,ci=+t.dataset.c,id=+t.dataset.id,p=P(id),s=S.settings;
+  if(a==='win'){const k=+t.dataset.k,c=S.courts[ci];ask(`สนาม ${c.no}: ${(k?c.t2:c.t1).map(x=>P(x).name).join(' + ')} ชนะ?`,'บันทึกผล',()=>record(ci,k))}
+  else if(a==='cancel')ask(`ยกเลิกเกมสนาม ${S.courts[ci].no}? ไม่บันทึกผล`,'ยกเลิกเกม',()=>cancelGame(ci));
+  else if(a==='treset'){const c=S.courts[ci];ask(`สนาม ${c.no}: เริ่มจับเวลาใหม่จาก 00:00?`,'เริ่มใหม่',()=>{c.start=Date.now();commit()})}
+  else if(a==='shp'){snap();const c=S.courts[ci];c.sh=(c.sh||0)+1;S.shTotal=(S.shTotal||0)+1;commit();toast(`สนาม ${c.no}: ลูกแบด ${c.sh} ลูก (วันนี้ ${S.shTotal})`)}
+  else if(a==='shm'){const c=S.courts[ci];if(!(c.sh>0))return;snap();c.sh--;S.shTotal=Math.max(0,(S.shTotal||0)-1);commit()}
+  else if(a==='fill'){snap();fill(S.courts[ci]);commit()}
+  else if(a==='addg'){addG=t.dataset.g;document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.g===addG))}
+  else if(a==='sortg'){snap();S.players=S.players.map((x,i)=>[x,i]).sort((x,y)=>x[0].g.localeCompare(y[0].g)||x[1]-y[1]).map(x=>x[0]);commit();toast('เรียงกลุ่ม A ก่อน แล้วตามด้วย B')}
+  else if(a==='ren'&&p){editId=id;render();const i=$('#ren');if(i){i.focus();i.select()}}
+  else if(a==='rencancel'){editId=null;render()}
+  else if(a==='grp'&&p){snap();p.g=p.g==='A'?'B':'A';commit()}
+  else if(a==='act'&&p){snap();p.active=!p.active;if(p.active)p.q=S.clock++;commit()}
+  else if(a==='del'&&p)ask(`ลบ ${p.name}? ถ้าอยู่ในสนาม เกมนั้นจะถูกยกเลิก`,'ลบ',()=>{snap();S.courts.forEach(c=>{if(c.t1&&[...c.t1,...c.t2].includes(id)){const ids=[...c.t1,...c.t2].filter(x=>x!==id);clearC(c);front(ids)}});S.players=S.players.filter(x=>x.id!==id);commit()});
+  else if(a==='mode'){s.mode=t.dataset.m;S.courts.forEach(c=>{c.stay=null;c.streak=0});commit()}
+  else if(a==='mw'){s.maxWins=Math.min(5,Math.max(1,s.maxWins+ +t.dataset.d));commit()}
+  else if(a==='ct'){snap();s.courts=Math.min(8,Math.max(1,s.courts+ +t.dataset.d));syncCourts();commit()}
+  else if(a==='sd'){s.sameDiff=Math.min(10,Math.max(1,s.sameDiff+ +t.dataset.d));commit()}
+  else if(a==='tw'){s.timeWarn=Math.min(60,Math.max(0,s.timeWarn+ +t.dataset.d));commit()}
+  else if(a==='bal'){s.balance=!s.balance;commit()}
+  else if(a==='newday')ask('ล้างสกอร์และคู่ในสนาม? ผลวันนี้จะไม่ถูกบันทึก รายชื่อและคะแนนสะสมยังอยู่','ล้างสกอร์',()=>{snap();resetDay();commit();toast('ล้างสกอร์แล้ว กด “จัดคู่ลงสนาม” เพื่อเริ่ม')});
+  else if(a==='wipeplayers')ask(`ลบรายชื่อผู้เล่นทั้งหมด ${S.players.length} คน? สกอร์วันนี้และคะแนนสะสมของทุกคนจะหายไปด้วย`,'ล้างชื่อ',()=>{snap();resetDay();S.players=[];delete S.sample;commit();toast('ล้างชื่อผู้เล่นแล้ว')});
+  else if(a==='end'){if(!S.history.length){toast('ยังไม่มีเกมให้สรุป');return}const st=standings();ask(`จบการแข่งขันวันนี้ (${S.history.length} เกม)? ผลจะเก็บไว้ใน “การแข่งขันที่ผ่านมา”${st.on?' และรวมคะแนนเข้าคะแนนสะสม':''} แล้วเริ่มวันใหม่`,'จบการแข่งขัน',saveDay)}
+  else if(a==='scopy'){const x=S.sessions[+t.dataset.i];if(!x)return;try{navigator.clipboard.writeText(sessText(x)).then(()=>toast('คัดลอกแล้ว'),()=>toast('คัดลอกไม่ได้ในหน้านี้'))}catch(err){toast('คัดลอกไม่ได้ในหน้านี้')}}
+  else if(a==='sumclose')$('#sum').classList.remove('show');
+  else if(a==='sumsave')saveDay();
+  else if(a==='smode'){s.scoreMode=t.dataset.m;commit()}
+  else if(a==='tp'){s.topPts=Math.min(30,Math.max(4,s.topPts+ +t.dataset.d));s.minusMax=Math.min(s.minusMax,s.topPts);commit()}
+  else if(a==='mm'){s.minusMax=Math.min(s.topPts,Math.max(0,s.minusMax+ +t.dataset.d));commit()}
+  else if(a==='mg'){s.minG=Math.min(10,Math.max(1,s.minG+ +t.dataset.d));commit()}
+  else if(a==='wipe')ask('ล้างทั้งหมด? สกอร์ คะแนนสะสม ผลการแข่งขันที่ผ่านมา และรายชื่อผู้เล่นจะหายทั้งหมด','ล้างทั้งหมด',()=>{snap();const tab=S.tab,st=S.settings;S=blank();S.tab=tab;S.settings=st;syncCourts();commit();toast('ล้างทั้งหมดแล้ว')});
+  else if(a==='copy'){const txt=summaryText();
+    try{navigator.clipboard.writeText(txt).then(()=>toast('คัดลอกแล้ว'),()=>toast('คัดลอกไม่ได้ในหน้านี้'))}catch(err){toast('คัดลอกไม่ได้ในหน้านี้')}}
+});
+function installHelp(){const ua=navigator.userAgent,ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)return 'ติดตั้งแล้ว กำลังเปิดแบบแอป';
+  if(ios)return 'iPhone / iPad: เปิดใน Safari กดปุ่มแชร์ (สี่เหลี่ยมมีลูกศรขึ้น) แล้วเลือก “เพิ่มไปยังหน้าจอโฮม”';
+  if(/Android/.test(ua))return 'Android: กดปุ่ม “ติดตั้งแอป” ด้านบน หรือเมนู ⋮ ของ Chrome แล้วเลือก “ติดตั้งแอป / เพิ่มลงในหน้าจอหลัก”';
+  return 'Windows / Mac / Chromebook: ใน Chrome หรือ Edge กดปุ่ม “ติดตั้งแอป” ด้านบน หรือไอคอนติดตั้งในแถบที่อยู่ · Safari บน Mac: เมนู ไฟล์ > เพิ่มไปยัง Dock'}
+function valid(o){return o&&Array.isArray(o.players)&&Array.isArray(o.courts)&&o.settings}
+function doImport(txt){let o;try{o=JSON.parse(txt)}catch(e){toast('ข้อมูลไม่ถูกต้อง');return}
+  if(!valid(o)){toast('ไม่ใช่ไฟล์สำรองของแอปนี้');return}
+  ask(`นำเข้าข้อมูล ${o.players.length} คน ${o.history?o.history.length:0} เกม? ข้อมูลปัจจุบันจะถูกแทนที่`,'นำเข้า',()=>{snap();const tab=S.tab;S=Object.assign(blank(),o);S.settings=Object.assign(blank().settings,o.settings);S.tab=tab;delete S.sample;syncCourts();commit();toast('นำเข้าแล้ว')})}
+document.addEventListener('change',e=>{if(e.target.id!=='impf')return;const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>doImport(String(rd.result));rd.readAsText(f);e.target.value=''});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act,data=JSON.stringify(S);
+  if(a==='exp'){try{const b=new Blob([data],{type:'application/json'}),u=URL.createObjectURL(b),l=document.createElement('a');l.href=u;l.download='badminton-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast('บันทึกไฟล์แล้ว (ถ้าไม่มีไฟล์ ให้ใช้ “คัดลอกเป็นข้อความ”)')}catch(err){toast('บันทึกไฟล์ไม่ได้ ให้ใช้ “คัดลอกเป็นข้อความ”')}}
+  else if(a==='expc'){try{navigator.clipboard.writeText(data).then(()=>toast('คัดลอกข้อมูลแล้ว ส่งไปวางที่อีกเครื่องได้เลย'),()=>toast('คัดลอกไม่ได้'))}catch(err){toast('คัดลอกไม่ได้')}}
+  else if(a==='impt'){$('#impbox').hidden=false;$('#impgo').hidden=false;$('#impbox').focus()}
+  else if(a==='impgo'){doImport($('#impbox').value)}});
+let defer=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();defer=e;$('#inst').hidden=false});
+window.addEventListener('appinstalled',()=>{$('#inst').hidden=true;toast('ติดตั้งแล้ว')});
+$('#inst').addEventListener('click',()=>{if(!defer)return;defer.prompt();defer.userChoice.finally(()=>{defer=null;$('#inst').hidden=true})});
+try{if('serviceWorker' in navigator&&window.isSecureContext&&window.top===window.self)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+loadG();openState();
+$('#gbtn').addEventListener('click',openGrp);
+document.addEventListener('submit',e=>{const f=e.target;
+  if(f.id==='gnewf'){e.preventDefault();const nm=$('#gnew').value.trim().slice(0,30);if(!nm){toast('กรุณาใส่ชื่อก๊วน');return}
+    if(G.list.some(g=>g.name===nm)){toast('มีก๊วนชื่อนี้อยู่แล้ว');return}
+    save();const id='g'+Date.now().toString(36),tab=S.tab;G.list.push({id,name:nm});G.cur=id;saveG();undo=[];editId=null;S=blank();S.tab=tab==='settings'?'players':tab;syncCourts();closeGrp();commit();toast('สร้างก๊วน '+nm+' แล้ว เพิ่มผู้เล่นได้เลย');if(S.tab!=='players'){S.tab='players';commit()}}
+  else if(f.id==='grenf'){e.preventDefault();const g=G.list.find(x=>x.id===f.dataset.g),nm=$('#gren').value.trim().slice(0,30);if(!g||!nm)return;
+    if(G.list.some(x=>x!==g&&x.name===nm)){toast('มีก๊วนชื่อนี้อยู่แล้ว');return}g.name=nm;gEdit=null;saveG();refreshGrp();render()}});
+document.addEventListener('click',e=>{const t=e.target.closest('#grp [data-act]');if(!t)return;const a=t.dataset.act,id=t.dataset.g;
+  if(a==='gopen')switchGroup(id);
+  else if(a==='gclose')closeGrp();
+  else if(a==='gren'){gEdit=id;refreshGrp()}
+  else if(a==='grencancel'){gEdit=null;refreshGrp()}
+  else if(a==='gdel'){const g=G.list.find(x=>x.id===id);if(!g)return;ask(`ลบก๊วน “${g.name}”? ผู้เล่น สกอร์ และคะแนนของก๊วนนี้จะหายทั้งหมด`,'ลบก๊วน',()=>{
+    try{localStorage.removeItem(skey(id))}catch(err){}G.list=G.list.filter(x=>x.id!==id);
+    if(G.cur===id){G.cur=G.list[0].id;saveG();undo=[];editId=null;const tab=S.tab;openState();S.tab=tab;commit()}else saveG();
+    refreshGrp();render();toast('ลบก๊วน '+g.name+' แล้ว')})}});
+$('#grp').addEventListener('click',e=>{if(e.target.id==='grp')closeGrp()});
+render();
+}
+</script>
+</body>
+</html>
