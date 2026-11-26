@@ -374,7 +374,7 @@ function vCourts(){const q=queue(),king=S.settings.mode==='king';
   ${S.sample?'<p class="note">กำลังแสดงรายชื่อตัวอย่าง แก้ไขได้ที่แท็บ “ผู้เล่น” หรือล้างที่ “ตั้งค่า”</p>':''}
   <div class="courts">${S.courts.map(courtHTML).join('')}</div>
   <h2>คิวรอ</h2><div class="qcols">${['A','B'].map(g=>{const l=q.filter(p=>p.g===g);return `<div class="qcol"><h3><i class="g ${g}">${g}</i>กลุ่ม ${g}<small>${l.length} คน</small></h3>${l.length?`<ol class="queue">${l.map((p,i)=>`<li class="${i<2?'next':''}"><b>${i+1}</b>${chip(p)}<small>${p.games} เกม</small></li>`).join('')}</ol>`:'<p class="empty-note">ไม่มีคนรอ</p>'}</div>`}).join('')}</div>
-  <p class="sub" style="margin-top:10px">กรอบเขียว = ใกล้ได้ลงสนาม · เรียงตามเวลาที่รอ</p></section>`}
+  <p class="sub" style="margin-top:10px">กรอบเหลือง = ใกล้ได้ลงสนาม · เรียงตามเวลาที่รอ</p></section>`}
 function vPlayers(){const ps=S.players,b=busy(),nA=ps.filter(p=>p.g==='A'&&p.active).length,nB=ps.filter(p=>p.g==='B'&&p.active).length,ex=nA>nB?'A':'B';
   return `<section class="band"><h1>ผู้เล่น</h1><p class="sub">มาเล่น: กลุ่ม A ${nA} คน · กลุ่ม B ${nB} คน${nA!==nB?` — ${ex} มากกว่า ${Math.abs(nA-nB)} คน ${Math.abs(nA-nB)>=4?`จึงจัด ${ex}${ex} vs ${ex}${ex} ได้`:`(ต้องต่างกันตั้งแต่ 4 คน จึงจะจัด ${ex}${ex} vs ${ex}${ex})`}`:''}</p>
   <form id="addf" class="card add"><input id="nm" placeholder="ชื่อ (หลายคนคั่นด้วย , )" autocomplete="off" aria-label="ชื่อผู้เล่น"><div class="seg">${['A','B'].map(g=>`<button type="button" class="${addG===g?'on':''}" data-act="addg" data-g="${g}">กลุ่ม ${g}</button>`).join('')}</div><button class="btn">เพิ่ม</button></form>
