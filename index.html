@@ -238,13 +238,29 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
 .shlink{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.shlink input{flex:1 1 220px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:14px monospace}
 .afm{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.afm input{flex:1 1 160px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:inherit}.afm div{display:flex;gap:8px;flex:1 1 100%}
 [data-skin=pop] .afm input,[data-skin=pop] .shlink input{border:2px solid #111;background:#fff}
+.hlp{max-width:560px!important;max-height:92vh;overflow:auto;padding:16px 16px 22px!important}
+.hlp h3{font:500 19px/1.3 Mitr,Prompt,sans-serif;margin:26px 0 6px;padding-top:14px;border-top:2px dashed #111}.hlp h3:first-of-type{border-top:0;margin-top:8px}
+.hlp ol,.hlp ul{margin:8px 0;padding-left:22px}.hlp li{margin:4px 0}.hlp .lead{color:var(--mut);margin:4px 0}
+.gx{pointer-events:none;position:relative;margin:14px 2px 18px;user-select:none}.gx .band{padding:0}.gx .qcols{grid-template-columns:1fr 1fr;gap:8px}.gx .queue li{padding:6px}.gx h1{font-size:22px}
+.gm{outline:3px solid #e8173b!important;outline-offset:2px;border-radius:10px}
+.gn{position:absolute;top:-13px;right:-11px;width:26px;height:26px;border-radius:50%;background:#e8173b;color:#fff;font:700 15px/26px sans-serif;text-align:center;z-index:4;box-shadow:0 0 0 2px #fff;font-style:normal}
+.side>.gn{right:auto;left:-11px}
+.gnum{display:inline-block;width:22px;height:22px;border-radius:50%;background:#e8173b;color:#fff;font:700 13px/22px sans-serif;text-align:center;margin-right:6px;font-style:normal}
+.gi{display:flex;gap:10px;margin:12px 0}.gi>div{flex:1;text-align:center;font-size:13px;line-height:1.35}
+.gph{height:190px;border:5px solid #111;border-radius:22px;background:#fff;position:relative;overflow:hidden;margin-bottom:8px}
+.gph .u{margin:7px;background:#eee;border-radius:6px;font-size:9px;padding:3px;overflow:hidden;white-space:nowrap}.gph .pg{margin:0 7px;height:110px;border-radius:6px;background:var(--hi);opacity:.5}
+.gph .bb{position:absolute;bottom:0;left:0;right:0;height:30px;background:#f2f2f2;border-top:1px solid #ccc;display:flex;justify-content:space-around;align-items:center;font-size:12px}
+.gph .sh{position:absolute;left:0;right:0;bottom:0;height:120px;background:#f0f0f4;border-radius:12px 12px 0 0;padding:6px}.gph .sh div{background:#fff;border-radius:6px;margin-bottom:5px;padding:5px;font-size:10px;text-align:left}
+.gph .hm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 10px}.gph .hm i{display:block;height:30px;border-radius:8px;background:#ddd}.gph .hm img{width:30px;height:30px;border-radius:8px;display:block;margin:0 auto 2px}
+.gred{outline:3px solid #e8173b;outline-offset:2px;border-radius:6px}
+.hlp table{font-size:14px}
 .shst{font-size:14px;margin:8px 0 0}.shst.ok{color:var(--court)}.shst.err{color:#c8372d}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="20" r="4.5" fill="#ffd84d"/><path d="M8.5 18 4 4h18l-4.5 14z" fill="#fff" opacity=".92"/><path d="M9 6l3 11M13 5v12M17 6l-3 11" stroke="#1d7a4f" stroke-width="1.2"/></svg><button class="gbtn" id="gbtn" aria-label="เลือกก๊วน"><span id="gname">จัดคู่แบด</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
-  <button class="btn" id="inst" hidden>ติดตั้งแอป</button><button class="btn endb" data-act="end">จบการแข่งขัน</button><button class="btn icon" id="undo" aria-label="ย้อนกลับ" title="ย้อนกลับ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+  <button class="btn" id="inst" hidden>ติดตั้งแอป</button><button class="btn endb" data-act="end">จบการแข่งขัน</button><button class="btn icon" id="helpb" aria-label="คู่มือการใช้งาน" title="คู่มือ" style="font:700 20px/1 Mitr,sans-serif">?</button><button class="btn icon" id="undo" aria-label="ย้อนกลับ" title="ย้อนกลับ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
 </header>
 <div class="vbar" id="vbar" hidden></div>
 <main id="app"></main>
@@ -256,6 +272,7 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
 </nav>
 <div class="modal" id="modal"><div class="card"><p id="mmsg"></p><div class="row"><button class="btn ghost" id="mno">ยกเลิก</button><button class="btn" id="mok">ยืนยัน</button></div></div></div>
 <div class="modal" id="grp"><div class="card sumcard" id="grpbody"></div></div>
+<div class="modal" id="help"><div class="card hlp" id="helpbody"></div></div>
 <div class="modal" id="sum"><div class="card sumcard" id="sumbody"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
@@ -422,6 +439,7 @@ function saveDay(){snap();const st=standings();
 function previewPts(N){const s=S.settings,M=Math.ceil(N/2),P=s.topPts,Q=s.minusMax;return [...Array(N)].map((_,i)=>{const r=i+1,v=Math.round(r===M?0:r<M?(r===1?P:(P-3)*(M-r)/(M-2)):-Q*(r-M)/(N-M))+0;return (v>0?'+':'')+v}).join(' ')}
 function vSettings(){const s=S.settings,pm=s.scoreMode==='points';
   return `<section class="band"><h1>ตั้งค่า</h1><p class="sub">แตะหัวข้อเพื่อเปิดดู · ปรับได้ระหว่างเล่น มีผลตั้งแต่เกมถัดไป</p><div class="set">
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span><b>คู่มือการใช้งาน</b><br><small style="color:var(--mut)">ภาพประกอบทุกขั้นตอน ตั้งแต่ติดตั้งถึงแชร์ให้เพื่อนดู</small></span><button class="btn" data-act="help">เปิดคู่มือ</button></div>
   ${acctCard()}
   <details class="card sect" data-sec="match" ${OPEN.match?'open':''}><summary><span><b>การจับคู่</b><small>${s.mode==='king'?'ชนะ 2 เกมออก':'เล่น 1 เกม ออกทั้งคู่'} · ${s.courts} สนาม</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
   <div class="opt"><button class="${s.mode==='king'?'on':''}" data-act="mode" data-m="king"><b>ชนะ 2 เกมออก</b><span>ผู้แพ้ออก ผู้ชนะอยู่ต่อ ชนะติด 2 เกมออกทั้ง 2 คู่</span></button><button class="${s.mode==='one'?'on':''}" data-act="mode" data-m="one"><b>เล่น 1 เกม ออกทั้งคู่</b><span>จบเกมแล้วทั้ง 4 คนกลับเข้าคิว</span></button></div>
@@ -621,13 +639,88 @@ function resumeAcct(){let had=null;try{had=localStorage.getItem(AKEY)}catch(e){}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||VIEW)return;const a=t.dataset.act;
   if(a==='appcopy'){try{navigator.clipboard.writeText(APP_URL).then(()=>toast('คัดลอกลิงก์แอปแล้ว'),()=>toast('คัดลอกไม่ได้ กดค้างที่ลิงก์แล้วคัดลอก'))}catch(err){toast('คัดลอกไม่ได้')}}
   else if(a==='appshare'){const d={title:'แอปจัดคู่แบดมินตัน',text:'แอปจัดคู่ตีแบด แบ่งกลุ่ม A/B สลับคู่อัตโนมัติ มีสกอร์บอร์ด ใช้ฟรี',url:APP_URL};if(navigator.share)navigator.share(d).catch(()=>{});else{try{navigator.clipboard.writeText(APP_URL);toast('คัดลอกลิงก์แอปแล้ว')}catch(err){}}}});
+// ---------- คู่มือในแอป: ภาพประกอบวาดจากหน้าจอจริงของแอปด้วยข้อมูลตัวอย่าง ----------
+function demoS(){const real=S,rt=TOP;let D;try{S=sample();delete S.sample;S.settings.courts=2;syncCourts();autofill();
+  const c=S.courts[0];if(c.t1){const W=c.t1.map(P),L=c.t2.map(P);W.forEach(p=>{p.games=1;p.wins=1});L.forEach(p=>{p.games=1});
+    S.history=[{n:1,c:1,sh:1,d:312000,w:W.map(p=>p.name),l:L.map(p=>p.name),st:1}];c.stay=0;c.streak=1;c.sh=1;S.shTotal=1;c.start=Date.now()-125000}
+  D=S}finally{S=real;TOP=rt}return D}
+function withD(D,fn){const real=S,rt=TOP;S=D;try{calcTop();return fn()}finally{S=real;TOP=rt}}
+const gclean=s=>s.replace(/ (id|data-act|data-tab|data-c|data-k|data-id|data-g|data-sec|data-d|data-m|data-i|onclick|for)="[^"]*"/g,'').replace(/ open(?=[ >])/g,' open');
+function gpick(html,sel){const d=document.createElement('div');d.innerHTML=html;const e=d.querySelector(sel);return e?gclean(e.outerHTML):''}
+const gx=(html,marks)=>`<div class="gx" data-marks='${JSON.stringify(marks||[])}'>${html}</div>`;
+const gn=n=>`<i class="gnum">${n}</i>`;
+function helpHTML(){const D=demoS();
+  const court=withD(D,()=>gclean(courtHTML(D.courts[0],0)));
+  const queueH=withD(D,()=>gpick(vCourts(),'.qcols'));
+  const players=withD(D,()=>{const d=document.createElement('div');d.innerHTML=vPlayers();d.querySelectorAll('.plist li').forEach((li,i)=>{if(i>1)li.remove()});d.querySelectorAll('.band>h1,.band>.sub').forEach(x=>x.remove());return gpick(d.innerHTML,'.band')});
+  const match=withD(D,()=>{const d=document.createElement('div');d.innerHTML=vSettings();const s=d.querySelector('[data-sec=match] .opt');return s?gclean(s.outerHTML):''});
+  const score=withD(D,()=>gpick(vScore(),'.scroll'));
+  const groups=`<div class="card" style="max-width:none"><h2 style="margin:0 0 4px;font-size:20px">ก๊วน</h2><ul class="glist"><li class="cur"><button class="gopen"><b>ก๊วนหลัก</b><small>12 คน · ใช้อยู่</small></button><span class="acts"><button class="mini">แก้ชื่อ</button></span></li></ul><form class="add" style="margin-top:12px"><input value="ก๊วนวันพุธ"><button class="btn">สร้างก๊วน</button></form></div>`;
+  const acct=`<div class="card" style="max-width:none"><b>บัญชี (ไม่บังคับ)</b><form class="afm"><input placeholder="ID (a-z 0-9 . _ -)"><input placeholder="รหัสผ่าน (6 ตัวขึ้นไป)"><div><button class="btn">เข้าสู่ระบบ</button><button class="btn ghost" type="button">สมัคร ID ใหม่</button></div></form></div>`;
+  const share=`<div class="card" style="max-width:none"><b>แชร์ให้คนอื่นดู (ดูได้อย่างเดียว)</b><div class="shlink"><input value="${APP_URL}?view=k3f8x2m9q1ab"><button class="btn">ส่งลิงก์</button><button class="btn ghost">คัดลอก</button><button class="btn ghost">หยุดแชร์</button></div><p class="shst ok">กำลังแชร์ · อัปเดตล่าสุด 20:15:04</p></div>`;
+  const vbarH=`<div class="vbar" style="position:static;border-radius:12px"><i class="dot on"></i><span><b>ดูอย่างเดียว</b> · ก๊วนหลัก · อัปเดต 20:15:04</span><button type="button">ออก</button></div>`;
+  const topH=`<header class="top" style="position:static;border-radius:12px;border:2.5px solid #111"><div class="brand"><span class="gbtn">ก๊วนหลัก ▾</span></div><button class="btn endb">จบการแข่งขัน</button><button class="btn icon">?</button><button class="btn icon">↶</button></header>`;
+  const confirmH=`<div class="card" style="max-width:none;box-shadow:6px 6px 0 #111"><p>สนาม 1: ${withD(D,()=>D.courts[0].t2.map(id=>P(id).name).join(' + '))} ชนะ?</p><div class="row" style="display:flex;gap:10px;justify-content:flex-end"><button class="btn ghost">ยกเลิก</button><button class="btn">บันทึกผล</button></div></div>`;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0">คู่มือการใช้งาน</h2><button class="btn ghost" data-act="helpclose">ปิด</button></div>
+<p class="lead">จัดคู่ตีแบดให้ก๊วน แบ่งกลุ่ม A/B สลับคู่อัตโนมัติ มีสกอร์บอร์ด คะแนนสะสม นับลูกแบด และแชร์ให้เพื่อนดูสนามแบบสด ใช้ฟรี</p>
+<h3>1. ติดตั้งบนมือถือ</h3>
+<div class="gi"><div><div class="gph"><div class="u">godsand.github.io/TeeBadGun</div><div class="pg"></div><div class="bb"><span>‹</span><span class="gred">⇪</span><span>□</span></div></div>${gn(1)}เปิดใน <b>Safari</b> กด <b>แชร์</b></div>
+<div><div class="gph"><div class="u">godsand.github.io/TeeBadGun</div><div class="sh"><div>คัดลอก</div><div class="gred">เพิ่มไปยังหน้าจอโฮม</div><div>พิมพ์</div></div></div>${gn(2)}<b>เพิ่มไปยังหน้าจอโฮม</b></div>
+<div><div class="gph" style="background:linear-gradient(#7fb6ff,#c9b8ff)"><div class="hm"><i></i><i></i><i></i><span class="gred"><img src="icon-192.png" alt=""></span><i></i><i></i></div></div>${gn(3)}เปิดจากไอคอน</div></div>
+<p><b>Android:</b> Chrome > ⋮ > ติดตั้งแอป · <b>คอม:</b> Chrome / Edge > ไอคอนติดตั้งท้ายแถบที่อยู่ · เปิดจาก LINE ให้เลือกเปิดใน Safari ก่อน</p>
+<p>ชวนก๊วนอื่นมาใช้: ตั้งค่า > <b>แนะนำแอปให้เพื่อน</b> > <b>ส่งลิงก์</b></p>
+<h3>2. สมัคร ID (สำหรับคนคุมสนาม)</h3><p class="lead">แท็บ ตั้งค่า การ์ดบนสุด · คนที่แค่ดูสนามไม่ต้องสมัคร</p>
+${gx(acct,[['.afm input',1],['.afm input+input',2],['.afm .ghost',3]])}
+<ol><li>ID: a-z ตัวเลข <code>. _ -</code> ยาว 3–20 ตัว</li><li>รหัสผ่าน 6 ตัวขึ้นไป · <b>ลืมแล้วกู้คืนไม่ได้</b></li><li>ครั้งแรกกด <b>สมัคร ID ใหม่</b> · เครื่องอื่นกด <b>เข้าสู่ระบบ</b> แล้วเลือก <b>ใช้ข้อมูลในบัญชี</b></li></ol>
+<h3>3. เพิ่มผู้เล่น</h3><p class="lead">แต่ละฝั่งจะมี A กับ B อย่างละคน (AB vs AB) เช่น A = มือหนัก B = มือใหม่</p>
+${gx(players,[['.seg',1],['.add input',2],['.add>.btn',3],['.plist .acts',4]])}
+<ol><li>เลือกกลุ่ม A หรือ B</li><li>พิมพ์ชื่อ ต้องการเพิ่มทีเดียวให้ใส่ <code>,</code> แล้วพิมพ์ชื่อต่อ</li><li>กด <b>เพิ่ม</b></li><li>แก้ชื่อ · ย้ายกลุ่ม · <b>พัก</b> (คนที่ไม่มาวันนี้ ไม่ต้องลบ) · ลบ</li></ol>
+<h3>4. ตั้งค่าการจับคู่</h3><p class="lead">ตั้งค่า > การจับคู่ · ปรับได้ระหว่างเล่น มีผลเกมถัดไป</p>
+${gx(match,[['.opt button',1],['.opt button+button',2]])}
+<ol><li><b>ชนะ 2 เกมออก</b> ผู้แพ้ออก ผู้ชนะอยู่ต่อ ชนะติด 2 เกมออกทั้งคู่</li><li><b>เล่น 1 เกม</b> ออกทั้ง 4 คน</li></ol><p>สนามได้สูงสุด 12 สนาม · จัด AA vs AA / BB vs BB ให้เองเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ 4 คน</p>
+<h3>5. คุมสนาม</h3>
+${gx(court,[['.side',1],['.timer',2],['.shp',3],['header .link',4]])}
+<ol><li><b>แตะฝั่งที่ชนะ</b> แอปจัดคู่ถัดไปลงสนามให้เอง</li><li>ตัวจับเวลา แตะเพื่อเริ่มนับใหม่</li><li>เปิดลูกแบดใหม่กด <b>+ ลูกแบด</b></li><li>ยกเลิกเกมโดยไม่บันทึกผล</li></ol>
+<p>แตะฝั่งที่ชนะแล้วกดยืนยัน <b>บันทึกผล</b></p>${gx(confirmH,[['.row .btn:not(.ghost)',1]])}
+<p>คิวรออยู่ใต้สนาม กรอบเหลือง = ใกล้ได้ลงสนาม</p>${gx(queueH)}
+<h3>6. สกอร์และจบการแข่งขัน</h3>
+${gx(topH,[['.endb',1],['.btn.icon+.btn.icon',2]])}
+<ol><li>จบวันกด <b>จบการแข่งขัน</b> ผลเก็บเข้าประวัติ คะแนนรวมเข้าคะแนนสะสม แล้วเริ่มวันใหม่</li><li>กดผิด กดย้อนกลับ</li></ol>
+${gx(score)}
+<p>แท็บ <b>สกอร์</b> มีปุ่มคัดลอกสกอร์ไปวางใน LINE · อันดับ 1 ได้ +10 ไล่ลงถึงท้ายสุด −5 ต้องเล่นครบ 3 เกม ปรับได้ที่ ตั้งค่า > การนับคะแนน</p>
+<h3>7. แยกก๊วน</h3><p class="lead">แต่ละก๊วนแยกผู้เล่น สกอร์ คะแนนสะสม และลิงก์แชร์ออกจากกัน</p>
+${gx(groups,[['.gopen',1],['.add .btn',2]])}
+<ol><li>กดชื่อก๊วนมุมซ้ายบน เพื่อสลับก๊วน</li><li>พิมพ์ชื่อแล้วกด <b>สร้างก๊วน</b></li></ol>
+<h3>8. แชร์ให้คนอื่นดูสนามแบบสด</h3><p class="lead"><b>คนคุมสนาม:</b> ตั้งค่า > แชร์ให้คนอื่นดู > กด <b>เปิดลิงก์สำหรับดู</b></p>
+${gx(share,[['.shlink .btn',1],['.shlink .ghost+.ghost',2]])}
+<ol><li><b>ส่งลิงก์</b> เข้ากลุ่ม LINE</li><li><b>หยุดแชร์</b> ลิงก์เดิมใช้ไม่ได้อีก</li></ol>
+<p class="lead"><b>ผู้ชม:</b> แตะลิงก์ ไม่ต้องสมัคร เห็นสนามแบบสด แต่แก้ไขไม่ได้</p>
+${gx(vbarH,[['span',1],['button',2]])}
+<ol><li>แถบดำ “ดูอย่างเดียว” จุดเขียว = เชื่อมต่ออยู่</li><li><b>ออก</b> เมื่อจะใช้แอปคุมสนามเอง</li></ol>
+<h3>9. ข้อควรรู้และแก้ปัญหา</h3>
+<ul><li>คุมสนามทีละเครื่อง กดพร้อมกันสองเครื่อง อันหลังจะทับ</li><li>ไม่มีเน็ตก็คุมได้ ผู้ชมจะเห็นเมื่อกลับมามีเน็ต</li><li>ไม่สมัคร ID แล้วลบแอป = ข้อมูลหาย สำรองได้ที่ ตั้งค่า > สำรอง / ย้ายข้อมูล</li></ul>
+<div class="scroll"><table><thead><tr><th>ปัญหา</th><th>วิธีแก้</th></tr></thead><tbody>
+<tr><td>ไม่เห็นปุ่มหรือเมนูใหม่</td><td>ปัดปิดแอปทิ้งแล้วเปิดใหม่ 1–2 ครั้ง</td></tr>
+<tr><td>เปิดแอปแล้วเจอแถบดำ “ดูอย่างเดียว”</td><td>เครื่องนี้เคยเปิดลิงก์ดู กด <b>ออก</b></td></tr>
+<tr><td>ผู้ชมเห็น “ไม่พบห้องนี้” หรือ “ปิดการแชร์แล้ว”</td><td>ลิงก์ผิดหรือถูกหยุดแชร์ ขอลิงก์ใหม่จากคนคุม</td></tr>
+<tr><td>คนคุมเห็น “เครื่องนี้ไม่มีสิทธิ์เขียนห้องนี้แล้ว”</td><td>กด <b>หยุดแชร์</b> แล้วเปิดลิงก์ใหม่ ส่งให้ผู้ชมอีกครั้ง</td></tr>
+<tr><td>ลืมรหัสผ่าน</td><td>กู้คืนไม่ได้ ถ้าเครื่องเดิมยังมีข้อมูล ให้ออกจากระบบแล้วสมัคร ID ใหม่บนเครื่องนั้น</td></tr></tbody></table></div>
+<div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn" data-act="helpclose">ปิดคู่มือ</button></div>`}
+function gmark(root){root.querySelectorAll('.gx').forEach(g=>{let m=[];try{m=JSON.parse(g.dataset.marks||'[]')}catch(e){}
+  m.map(([sel,n])=>[g.querySelector(sel),n]).forEach(([el,n])=>{if(!el)return;if(el.tagName==='INPUT'){const w=document.createElement('span');w.style.cssText='position:relative;display:block;flex:1 1 160px';el.replaceWith(w);w.append(el);el.style.width='100%';el=w}
+    if(getComputedStyle(el).position==='static')el.style.position='relative';el.classList.add('gm');const b=document.createElement('i');b.className='gn';b.textContent=n;el.append(b)})})}
+function openHelp(){const b=$('#helpbody');b.innerHTML=helpHTML();gmark(b);b.querySelectorAll('.gx .tm').forEach(e=>e.classList.remove('tm'));$('#help').classList.add('show');b.scrollTop=0}
+function closeHelp(){$('#help').classList.remove('show')}
+$('#helpb').addEventListener('click',openHelp);
+$('#help').addEventListener('click',e=>{if(e.target.id==='help')closeHelp()});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;if(t.dataset.act==='help')openHelp();else if(t.dataset.act==='helpclose')closeHelp()});
 // ---------- โหมดผู้ชม ----------
 function vbar(state,extra){const b=$('#vbar');b.hidden=false;b.innerHTML=`<i class="dot ${state}"></i><span><b>ดูอย่างเดียว</b> · ${esc(gName())}${extra?' · '+esc(extra):''}</span><button type="button" data-act="vexit">ออก</button>`}
 function startView(){document.documentElement.classList.add('ro');G={cur:'view',list:[{id:'view',name:'กำลังโหลด…'}]};S=blank();S.tab='courts';syncCourts();
   let conn='',last='กำลังเชื่อมต่อ…';const bar=()=>vbar(conn,last);bar();
   document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');
     if(t&&t.dataset.act==='vexit'){e.stopImmediatePropagation();ask('ออกจากโหมดดู แล้วเปิดแอปเป็นของตัวเอง?','ออก',()=>{try{localStorage.removeItem(VKEY)}catch(err){}location.href=location.pathname});return}
-    if((t&&!['scopy','copy','sumclose'].includes(t.dataset.act))||e.target.closest('#gbtn,#undo')){e.stopImmediatePropagation();e.preventDefault()}},true);
+    if((t&&!['scopy','copy','sumclose','help','helpclose'].includes(t.dataset.act))||e.target.closest('#gbtn,#undo')){e.stopImmediatePropagation();e.preventDefault()}},true);
   document.addEventListener('submit',e=>{e.stopImmediatePropagation();e.preventDefault()},true);
   fb().then(f=>{f.D.onValue(f.D.ref(f.db,'.info/connected'),s=>{conn=s.val()?'on':'off';if(!s.val())last='ขาดการเชื่อมต่อ กำลังลองใหม่…';bar()});
     f.D.onValue(f.D.ref(f.db,'rooms/'+VIEW),s=>{const v=s.val();
