@@ -254,6 +254,13 @@ details ol{padding-inline-start:20px;margin:6px 0 0}details li{margin-bottom:6px
 .gph .hm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 10px}.gph .hm i{display:block;height:30px;border-radius:8px;background:#ddd}.gph .hm img{width:30px;height:30px;border-radius:8px;display:block;margin:0 auto 2px}
 .gred{outline:3px solid #e8173b;outline-offset:2px;border-radius:6px}
 .hlp table{font-size:14px}
+.optl{margin:14px 0 6px;font-weight:600}.optl:first-child{margin-top:4px}
+.swq{cursor:pointer}.shc small{font-size:13px;color:var(--mut)}
+.pw{display:flex;align-items:center;justify-content:center;gap:4px;max-width:100%}
+.lk{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.85);color:#555;border:2px solid #111;cursor:pointer}
+.lk.on{background:#111;color:#ffd23f}.pw:has(.lk.on) .nm{box-shadow:0 0 0 3px #111}
+.idlebtns{display:flex;flex-direction:column;gap:10px;align-items:center}.rndb{font-size:15px}
+.ro .lk:not(.on){display:none!important}.ro .lk{pointer-events:none}.ro .rndb{display:none!important}
 .shst{font-size:14px;margin:8px 0 0}.shst.ok{color:var(--court)}.shst.err{color:#c8372d}
 </style>
 </head>
@@ -287,7 +294,7 @@ if(VIEW&&!/^[a-z0-9]{6,40}$/.test(VIEW))VIEW=null;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 let S,undo=[],addG='A',editId=null,mfn=null,tt=null;
-const blank=()=>({players:[],courts:[],history:[],clock:1,seq:1,tab:'courts',settings:{mode:'king',maxWins:2,courts:2,balance:true,sameDiff:4,timeWarn:15,scoreMode:'points',topPts:10,minusMax:5,minG:3},sessions:[],shTotal:0});
+const blank=()=>({players:[],courts:[],history:[],clock:1,seq:1,tab:'courts',settings:{mode:'king',pick:'queue',maxWins:2,courts:2,balance:true,sameDiff:4,timeWarn:15,scoreMode:'points',topPts:10,minusMax:5,minG:3},sessions:[],shTotal:0});
 function addP(s,name,g){s.players.push({id:s.seq++,name,g,active:true,games:0,wins:0,lp:null,lo:[],par:{},opp:{},q:s.clock++})}
 function sample(){const s=blank();['ต้น','บอย','เอ็ม','ปอนด์','กอล์ฟ','บีม','โอ๊ต'].forEach(n=>addP(s,n,'A'));['มิ้นท์','แพร','ฝน','นุ่น','จูน'].forEach(n=>addP(s,n,'B'));s.sample=true;return s}
 // ก๊วน: แต่ละก๊วนเก็บข้อมูลแยกกันทั้งหมด (ผู้เล่น สกอร์ คะแนน การตั้งค่า)
@@ -299,7 +306,7 @@ const gName=()=>(G.list.find(g=>g.id===G.cur)||{}).name||'จัดคู่แ�
 function load(id){try{const t=localStorage.getItem(skey(id||G.cur));if(t)return JSON.parse(t)}catch(e){}return null}
 function save(){if(VIEW)return;try{localStorage.setItem(skey(G.cur),JSON.stringify(S))}catch(e){}if(shRoom())schedPush();if(acctOn())schedAcct(G.cur)}
 function openState(){const x=load();if(!x){S=G.cur==='main'?sample():blank();syncCourts();if(S.sample)autofill()}
-  else{S=x;S.settings=Object.assign(blank().settings,S.settings);if(!S.sessions)S.sessions=[];if(S.shTotal==null)S.shTotal=0;S.courts.forEach(c=>{if(c.t1&&!c.start)c.start=Date.now()});syncCourts()}}
+  else{S=x;S.settings=Object.assign(blank().settings,S.settings);if(S.settings.mode==='equal'||S.settings.mode==='queue'){S.settings.pick=S.settings.mode;S.settings.mode='one'}if(!PICKS[S.settings.pick])S.settings.pick='queue';if(!S.sessions)S.sessions=[];if(S.shTotal==null)S.shTotal=0;S.courts.forEach(c=>{if(c.t1&&!c.start)c.start=Date.now()});syncCourts()}}
 function switchGroup(id){if(id===G.cur){closeGrp();return}save();const tab=S.tab;G.cur=id;saveG();undo=[];editId=null;openState();S.tab=tab;closeGrp();commit();toast('เปิดก๊วน '+gName())}
 function grpHTML(){return `<h2 style="margin:0 0 4px">ก๊วน</h2><p class="sub">แต่ละก๊วนแยกผู้เล่น สกอร์ คะแนนสะสม และการตั้งค่าออกจากกันทั้งหมด</p>
   <ul class="glist">${G.list.map(g=>{const x=g.id===G.cur?S:load(g.id),n=x&&x.players?x.players.length:0,cur=g.id===G.cur;
@@ -326,14 +333,26 @@ const SPL=[[0,1,2,3],[0,2,1,3],[0,3,1,2]];
 const cnt=g=>S.players.filter(p=>p.active&&p.g===g).length;
 // ข้อ 2: AA vs AA / BB vs BB ได้เฉพาะเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ 4 คน (คงที่)
 function sameOK(){const d=cnt('A')-cnt('B'),th=4;return d>=th?'AA':-d>=th?'BB':null}
-function pool(){const q=queue(),out=q.slice(0,8);for(const g of ['A','B'])out.push(...q.filter(p=>p.g===g&&!out.includes(p)).slice(0,4));
+// โหมด: king = ชนะ 2 เกมออก · one = เล่น 1 เกมออกทั้งคู่ · equal = ทุกคนได้เล่นเท่ากัน · queue = ต่อคิว
+// ขั้น 1 วิธีออกจากสนาม (mode) · ขั้น 2 วิธีเลือกคนลงสนามจากคิว (pick)
+const MODES={king:['ชนะ 2 เกมออก','ผู้แพ้ออก ผู้ชนะอยู่ต่อ ชนะติด 2 เกมออกทั้ง 2 คู่'],one:['เล่น 1 เกม ออกทั้งคู่','จบเกมแล้วทั้ง 4 คนกลับเข้าคิว']};
+const PICKS={equal:['ทุกคนได้เล่นเท่ากัน','คนที่เล่นน้อยที่สุดได้ลงก่อน'],queue:['ต่อคิว','คนที่ออกไปต่อท้ายคิว ฝั่งแพ้ต่อก่อนฝั่งชนะ ลงตามลำดับคิวเป๊ะ']};
+const pickOf=()=>PICKS[S.settings.pick]?S.settings.pick:'queue';
+const modeName=()=>(MODES[S.settings.mode]||MODES.king)[0]+' · '+PICKS[pickOf()][0];
+// ลำดับคิว: เล่นเท่ากันเรียงคนเล่นน้อยก่อน แบบอื่นเรียงตามเวลาที่รอ
+const order=q=>pickOf()==='equal'?q.slice().sort((a,c)=>a.games-c.games||a.q-c.q):q;
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pool(rand){let q=order(queue());if(rand)q=shuffle(q);const out=q.slice(0,8);for(const g of ['A','B'])out.push(...q.filter(p=>p.g===g&&!out.includes(p)).slice(0,4));
   return out.map(p=>({p,r:q.indexOf(p)})).sort((a,b)=>a.r-b.r)}
-function bestMatch(){const q=pool(),n=q.length,same=sameOK();let best=null;
-  for(let a=0;a<n;a++)for(let b=a+1;b<n;b++)for(let c=b+1;c<n;c++)for(let d=c+1;d<n;d++){
-    const f=[q[a].p,q[b].p,q[c].p,q[d].p],rk=(q[a].r+q[b].r+q[c].r+q[d].r)*2;
+function combos(arr,k,st=0,cur=[],out=[]){if(cur.length===k){out.push(cur.slice());return out}for(let i=st;i<arr.length;i++){cur.push(arr[i]);combos(arr,k,i+1,cur,out);cur.pop()}return out}
+// fixed = คนที่ต้องอยู่สนามต่อ (ล็อค/ผู้ชนะ) · team = คู่ที่ต้องอยู่ฝั่งเดียวกัน · rand = สุ่มไม่สนลำดับคิว
+function bestMatch(fixed=[],team=null,rand=false){const q=pool(rand).filter(x=>!fixed.includes(x.p)),need=4-fixed.length,same=sameOK(),m=pickOf(),strict=m==='equal'||m==='queue',soft=strict?0.01:1;let best=null;
+  if(need<0)return null;
+  for(const ch of combos(q,need)){const f=[...fixed,...ch.map(x=>x.p)],rk=m==='equal'?ch.reduce((s,x)=>s+x.p.games*100+x.r,0):ch.reduce((s,x)=>s+x.r,0)*(strict?100:2);
     for(const s of SPL){const t1=[f[s[0]],f[s[1]]],t2=[f[s[2]],f[s[3]]],ty=typ(t1);
       if(ty!==typ(t2)||(ty!=='AB'&&ty!==same))continue;
-      const cost=rk+(ty==='AB'?0:8)+pairCost(...t1)+pairCost(...t2)+oppCost(t1,t2)+bal(t1,t2);
+      if(team&&!(team.every(p=>t1.includes(p))||team.every(p=>t2.includes(p))))continue;
+      const cost=rk+(ty==='AB'?0:8)+(rand?0:(pairCost(...t1)+pairCost(...t2)+oppCost(t1,t2)+bal(t1,t2))*soft);
       if(!best||cost<best.cost)best={cost,t1,t2}}}
   return best}
 function bestChallenger(stay){const q=pool().filter(x=>!stay.includes(x.p)),ty=typ(stay);let best=null;if(ty!=='AB'&&ty!==sameOK())return null;
@@ -341,15 +360,29 @@ function bestChallenger(stay){const q=pool().filter(x=>!stay.includes(x.p)),ty=t
     const cost=(q[a].r+q[b].r)*2+pairCost(...t)+oppCost(stay,t)+bal(stay,t);if(!best||cost<best.cost)best={cost,t}}
   return best}
 function clearC(c){c.t1=null;c.t2=null;c.stay=null;c.streak=0;c.start=null}
-function fill(c){const m=bestMatch();if(!m)return false;c.t1=m.t1.map(p=>p.id);c.t2=m.t2.map(p=>p.id);c.stay=null;c.streak=0;c.start=Date.now();return true}
+function place(c,m){c.t1=m.t1.map(p=>p.id);c.t2=m.t2.map(p=>p.id);c.stay=null;c.streak=0;c.start=Date.now()}
+function fill(c,fixed=[],rand=false){const m=bestMatch(fixed,null,rand);if(!m)return false;place(c,m);return true}
+// สุ่มคนเข้าสนาม: คนที่ล็อคไว้อยู่ต่อ คนอื่นกลับหัวคิวแล้วสุ่มใหม่จากคนรอทั้งหมด
+function randomize(ci){snap();const c=S.courts[ci],ids=c.t1?[...c.t1,...c.t2]:[],keep=ids.map(P).filter(p=>p&&p.lock),out=ids.filter(id=>!keep.some(p=>p.id===id)),old={t1:c.t1,t2:c.t2,stay:c.stay,streak:c.streak,start:c.start};
+  clearC(c);front(out);if(fill(c,keep,true)){commit();toast(keep.length?`สุ่มแล้ว · ${keep.map(p=>p.name).join(' + ')} ล็อคอยู่สนามต่อ`:'สุ่มคนลงสนามแล้ว')}
+  else{Object.assign(c,old);undo.pop();toast('สุ่มไม่ได้ คนรอไม่พอ หรือกลุ่มยังไม่ลงตัว');render()}}
+// สลับคนในคิวกับคนในสนาม (กลุ่มเดียวกัน) คนที่ออกได้ตำแหน่งคิวเดิมของคนที่เข้า
+function swapAsk(id){const p=P(id);if(!p)return;const on=S.courts.filter(c=>c.t1).flatMap(c=>[...c.t1,...c.t2].map(x=>({c,p:P(x)}))).filter(o=>o.p.g===p.g);
+  $('#sumbody').innerHTML=`<h2 style="margin:0 0 6px">สลับ ${chip(p)} เข้าสนาม</h2><p class="sub">${on.length?'แตะชื่อคนที่จะให้ออกมาแทน (เฉพาะกลุ่ม '+p.g+' เพื่อให้สนามยังเป็นคู่ตามกลุ่ม)':'ไม่มีคนกลุ่ม '+p.g+' อยู่ในสนาม'}</p>
+  <div class="opt" style="margin-top:12px">${on.map(o=>`<button data-act="swapdo" data-a="${p.id}" data-b="${o.p.id}"><b>สนาม ${o.c.no}: ${esc(o.p.name)}${o.p.lock?' (ล็อคอยู่)':''}</b><span>${o.p.games} เกม · ออกไปรอในคิวแทนที่ ${esc(p.name)}</span></button>`).join('')}</div>
+  <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn ghost" data-act="sumclose">ยกเลิก</button></div>`;$('#sum').classList.add('show')}
+function swapDo(a,b){const pin=P(a),pout=P(b),c=S.courts.find(c=>c.t1&&[...c.t1,...c.t2].includes(b));if(!pin||!pout||!c)return;snap();
+  for(const t of [c.t1,c.t2]){const k=t.indexOf(b);if(k>=0)t[k]=a}const q=pin.q;pin.q=pout.q;pout.q=q;pout.lock=false;
+  $('#sum').classList.remove('show');commit();toast(`${pin.name} ลงสนาม ${c.no} แทน ${pout.name}`)}
+function toggleLock(id){const p=P(id);if(!p)return;snap();p.lock=!p.lock;commit();toast(p.lock?`ล็อค ${p.name} ไว้ในสนาม จบเกมแล้วไม่ต้องออก`:`ปลดล็อค ${p.name} แล้ว`)}
 function autofill(){S.courts.forEach(c=>{if(!c.t1)fill(c)})}
 function toQueue(ids){ids.forEach(id=>{const p=P(id);if(p)p.q=S.clock++})}
 function front(ids){const q=queue();let m=q.length?Math.min(...q.map(p=>p.q)):0;ids.slice().reverse().forEach(id=>{const p=P(id);if(p)p.q=--m})}
 function syncCourts(){const n=S.settings.courts;
   while(S.courts.length<n)S.courts.push({no:S.courts.length+1,t1:null,t2:null,stay:null,streak:0});
-  while(S.courts.length>n){const c=S.courts.pop();if(c.t1)front([...c.t1,...c.t2]);if(c.sh)S.courts[S.courts.length-1].sh=(S.courts[S.courts.length-1].sh||0)+c.sh}}
-function record(ci,k){snap();const c=S.courts[ci],T=[c.t1,c.t2],W=T[k].map(P),L=T[1-k].map(P),gsh=c.sh||0;
-  c.sh=0;
+  while(S.courts.length>n){const c=S.courts.pop();if(c.t1)front([...c.t1,...c.t2]);if(c.sh){const l=S.courts[S.courts.length-1];l.sh=(l.sh||0)+c.sh;l.gs=(l.gs||0)+(c.gs||0)}}}
+function record(ci,k){snap();const c=S.courts[ci],T=[c.t1,c.t2],W=T[k].map(P),L=T[1-k].map(P),gsh=Math.max(0,(c.sh||0)-(c.gs||0));
+  c.gs=c.sh||0;
   for(const t of [W,L]){const o=t===W?L:W;t[0].lp=t[1].id;t[1].lp=t[0].id;
     t[0].par[t[1].id]=(t[0].par[t[1].id]||0)+1;t[1].par[t[0].id]=(t[1].par[t[0].id]||0)+1;
     for(const p of t){p.games++;p.lo=o.map(x=>x.id);for(const x of o)p.opp[x.id]=(p.opp[x.id]||0)+1}}
@@ -357,14 +390,16 @@ function record(ci,k){snap();const c=S.courts[ci],T=[c.t1,c.t2],W=T[k].map(P),L=
   const hot=W.filter(p=>p.ws===5);
   const streak=c.stay===k?c.streak+1:1,king=S.settings.mode==='king';
   S.history.unshift({n:S.history.length+1,c:c.no,sh:gsh,d:c.start?Date.now()-c.start:0,w:W.map(p=>p.name),l:L.map(p=>p.name),st:king?streak:0});
-  let msg;
+  let msg;const lockW=W.filter(p=>p.lock),lockL=L.filter(p=>p.lock),outL=L.filter(p=>!p.lock),outW=W.filter(p=>!p.lock);
+  clearC(c);
   if(king&&streak<2){
-    clearC(c);toQueue(L.map(p=>p.id));const ch=bestChallenger(W);
-    if(ch){c.t1=W.map(p=>p.id);c.t2=ch.t.map(p=>p.id);c.stay=0;c.streak=streak;c.start=Date.now();msg=`ผู้ชนะอยู่ต่อ (ชนะติด ${streak}) ผู้แพ้ไปท้ายคิว`}
-    else{toQueue(W.map(p=>p.id));fill(c);msg='ไม่มีคู่ท้าชิงกลุ่มตรงกัน จึงจัดใหม่ทั้งสนาม'}
-  }else{clearC(c);toQueue(L.map(p=>p.id));toQueue(W.map(p=>p.id));fill(c);
-    msg=king?`ชนะติด ${streak} ครั้ง ออกทั้ง 2 คู่`:'จบเกม ออกทั้ง 2 คู่'}
-  if(!c.t1)msg+=' · คนรอไม่พอสำหรับสนามนี้';
+    toQueue(outL.map(p=>p.id));const m=bestMatch([...W,...lockL],W);
+    if(m){place(c,m);c.stay=m.t1.includes(W[0])?0:1;c.streak=streak;msg=`ผู้ชนะอยู่ต่อ (ชนะติด ${streak}) ผู้แพ้ไปท้ายคิว`}
+    else{toQueue(outW.map(p=>p.id));fill(c,[...lockW,...lockL]);msg='ไม่มีคู่ท้าชิงกลุ่มตรงกัน จึงจัดใหม่ทั้งสนาม'}
+  }else{toQueue(outL.map(p=>p.id));toQueue(outW.map(p=>p.id));fill(c,[...lockW,...lockL]);
+    msg=(king?`ชนะติด ${streak} ครั้ง ออกทั้ง 2 คู่`:'จบเกม ออกทั้ง 2 คู่')+(pickOf()==='queue'?' ต่อท้ายคิว ฝั่งแพ้ได้ต่อก่อน':'')}
+  const lk=[...lockW,...lockL];if(lk.length&&c.t1)msg+=` · ${lk.map(p=>p.name).join(' + ')} ล็อคอยู่สนามต่อ`;
+  if(!c.t1){toQueue(lk.map(p=>p.id));msg+=' · คนรอไม่พอสำหรับสนามนี้'}
   if(hot.length)msg=`${hot.map(p=>p.name).join(' + ')} ชนะติด 5 เกม ติดไฟแล้ว! · `+msg;
   autofill();commit();toast(msg)}
 function cancelGame(ci){snap();const c=S.courts[ci],ids=[...c.t1,...c.t2];clearC(c);front(ids);commit();toast('ยกเลิกเกมแล้ว ผู้เล่นกลับไปหัวคิว')}
@@ -378,20 +413,24 @@ function calcTop(){TOP={};standings().rows.forEach(o=>{if(o.rank<=3)TOP[o.p.id]=
 const CROWN='<svg class="cw" viewBox="0 0 24 18" aria-hidden="true"><path d="M2.5 16 1.5 5l6 4.2L12 1.8l4.5 7.4 6-4.2-1 11z"/><circle cx="12" cy="11" r="1.7"/><circle cx="6.5" cy="12" r="1.2"/><circle cx="17.5" cy="12" r="1.2"/></svg>';
 const FLAME='<svg viewBox="0 0 12 16" aria-hidden="true"><path d="M6 .5C7 4 11 5.5 11 10a5 5 0 0 1-10 0c0-2.4 1.4-3.6 2.4-4.6C3.6 7 4.4 8 5.4 8 4.6 5.4 5 2.6 6 .5z"/></svg>';
 const isHot=p=>(p.ws||0)>=5;
+const LOCK='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="11" rx="2.5" fill="currentColor"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
+const UNLOCK='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10.5V7.5a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+const DICE='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-3px"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.6" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.6" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.6" fill="currentColor"/></svg>';
 function chip(p,rk){if(!p)return '';if(rk===undefined)rk=TOP[p.id]||0;const hot=isHot(p),n=Math.max(p.ws||0,5);const t=['','อันดับ 1','อันดับ 2','อันดับ 3'][rk]||'';
   return `<span class="nm${rk?' rk'+rk:''}${hot?' fire':''}"${t?` title="${t}"`:''}><i class="g ${p.g}">${p.g}${rk?CROWN:''}</i><span class="tx">${esc(p.name)}</span>${rk===1?'<b class="spk" aria-hidden="true">✦</b>':''}${hot?`<b class="fb" title="ชนะติด ${n} เกม">${FLAME}${n}</b>`:''}</span>`}
 const SHI='<svg class="shi" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="20" r="4.5" fill="#ffd84d" stroke="#111" stroke-width="1.2"/><path d="M8.5 17.5 4 4h18l-4.5 13.5z" fill="#fff" stroke="#111" stroke-width="1.2"/><path d="M9.5 6l3 11M13 5v12M16.5 6l-3 11" stroke="#111" stroke-width="1"/></svg>';
-const shRow=(c,i)=>`<div class="shrow"><span class="shc">${SHI}<b>${c.sh||0}</b> ลูก${c.t1?'เกมนี้':' (รอเกมถัดไป)'}</span><button class="mini" data-act="shm" data-c="${i}" ${c.sh>0?'':'disabled'} aria-label="ลดลูกแบด">−</button><button class="btn shp" data-act="shp" data-c="${i}">+ ลูกแบด</button></div>`;
+const shRow=(c,i)=>{const g=Math.max(0,(c.sh||0)-(c.gs||0));return `<div class="shrow"><span class="shc">${SHI}<b>${c.sh||0}</b> ลูก สนามนี้${c.t1?`<small> · เกมนี้ ${g}</small>`:''}</span><button class="mini" data-act="shm" data-c="${i}" ${c.sh>0?'':'disabled'} aria-label="ลดลูกแบด">−</button><button class="btn shp" data-act="shp" data-c="${i}">+ ลูกแบด</button></div>`};
 function courtHTML(c,i){const king=S.settings.mode==='king',max=2;
-  if(!c.t1){const ok=!!bestMatch();return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">ว่าง</span></header><div class="floor idle"><button class="btn light" data-act="fill" data-c="${i}" ${ok?'':'disabled'}>${ok?'จัดคู่ลงสนาม':'คนรอไม่พอ หรือกลุ่มยังไม่ลงตัว'}</button></div>${shRow(c,i)}</article>`}
-  const side=(t,k)=>`<button class="side" data-act="win" data-c="${i}" data-k="${k}">${king&&c.stay===k?`<span class="crown">ชนะติด ${c.streak}/${max}</span>`:''}${t.map(id=>chip(P(id))).join('')}<span class="hint">แตะเมื่อฝั่งนี้ชนะ</span></button>`;
-  return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">${typ(c.t1.map(P))} vs ${typ(c.t2.map(P))}</span><button class="link" data-act="cancel" data-c="${i}">ยกเลิกเกม</button></header><div class="floor"><button class="timer" data-act="treset" data-c="${i}" aria-label="เวลาที่เล่นไป แตะเพื่อเริ่มนับใหม่"><span class="tm" data-s="${c.start||Date.now()}">${fmt(Date.now()-(c.start||Date.now()))}</span></button>${side(c.t1,0)}<div class="net"></div>${side(c.t2,1)}</div>${shRow(c,i)}</article>`}
-function vCourts(){const q=queue(),king=S.settings.mode==='king';
-  return `<section class="band"><h1>สนาม</h1><p class="sub">${S.players.filter(p=>p.active).length} คนมาเล่น · รอ ${q.length} คน · ${king?`ชนะ 2 เกมออก (ผู้แพ้ออกทุกเกม)`:'เล่น 1 เกม ออกทั้งคู่'} · ลูกแบดวันนี้ ${S.shTotal||0} ลูก</p>
+  if(!c.t1){const ok=!!bestMatch();return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">ว่าง</span></header><div class="floor idle"><div class="idlebtns"><button class="btn light" data-act="fill" data-c="${i}" ${ok?'':'disabled'}>${ok?'จัดคู่ลงสนาม':'คนรอไม่พอ หรือกลุ่มยังไม่ลงตัว'}</button>${ok?`<button class="btn light rndb" data-act="rnd" data-c="${i}">${DICE} สุ่มลงสนาม</button>`:''}</div></div>${shRow(c,i)}</article>`}
+  const pl=id=>{const p=P(id);return `<span class="pw">${chip(p)}<span class="lk${p.lock?' on':''}" role="button" tabindex="0" data-act="lock" data-id="${id}" aria-label="${p.lock?'ปลดล็อค':'ล็อค'} ${esc(p.name)}" title="${p.lock?'ล็อคอยู่ แตะเพื่อปลด':'ล็อคให้อยู่สนามต่อ'}">${p.lock?LOCK:UNLOCK}</span></span>`};
+  const side=(t,k)=>`<button class="side" data-act="win" data-c="${i}" data-k="${k}">${king&&c.stay===k?`<span class="crown">ชนะติด ${c.streak}/${max}</span>`:''}${t.map(pl).join('')}<span class="hint">แตะเมื่อฝั่งนี้ชนะ</span></button>`;
+  return `<article class="court"><header><b>สนาม ${c.no}</b><span class="tag">${typ(c.t1.map(P))} vs ${typ(c.t2.map(P))}</span><button class="link rndl" data-act="rnd" data-c="${i}">${DICE} สุ่ม</button><button class="link" data-act="cancel" data-c="${i}">ยกเลิกเกม</button></header><div class="floor"><button class="timer" data-act="treset" data-c="${i}" aria-label="เวลาที่เล่นไป แตะเพื่อเริ่มนับใหม่"><span class="tm" data-s="${c.start||Date.now()}">${fmt(Date.now()-(c.start||Date.now()))}</span></button>${side(c.t1,0)}<div class="net"></div>${side(c.t2,1)}</div>${shRow(c,i)}</article>`}
+function vCourts(){const q=order(queue()),king=S.settings.mode==='king';
+  return `<section class="band"><h1>สนาม</h1><p class="sub">${S.players.filter(p=>p.active).length} คนมาเล่น · รอ ${q.length} คน · ${modeName()} · ลูกแบดวันนี้ ${S.shTotal||0} ลูก</p>
   ${S.sample?'<p class="note">กำลังแสดงรายชื่อตัวอย่าง แก้ไขได้ที่แท็บ “ผู้เล่น” หรือล้างที่ “ตั้งค่า”</p>':''}
   <div class="courts">${S.courts.map(courtHTML).join('')}</div>
-  <h2>คิวรอ</h2><div class="qcols">${['A','B'].map(g=>{const l=q.filter(p=>p.g===g);return `<div class="qcol"><h3><i class="g ${g}">${g}</i>กลุ่ม ${g}<small>${l.length} คน</small></h3>${l.length?`<ol class="queue">${l.map((p,i)=>`<li class="${i<2?'next':''}"><b>${i+1}</b>${chip(p)}<small>${p.games} เกม</small></li>`).join('')}</ol>`:'<p class="empty-note">ไม่มีคนรอ</p>'}</div>`}).join('')}</div>
-  <p class="sub" style="margin-top:10px">กรอบเหลือง = ใกล้ได้ลงสนาม · เรียงตามเวลาที่รอ</p></section>`}
+  <h2>คิวรอ</h2><div class="qcols">${['A','B'].map(g=>{const l=q.filter(p=>p.g===g);return `<div class="qcol"><h3><i class="g ${g}">${g}</i>กลุ่ม ${g}<small>${l.length} คน</small></h3>${l.length?`<ol class="queue">${l.map((p,i)=>`<li class="${i<2?'next':''} swq" data-act="swapq" data-id="${p.id}" role="button" tabindex="0" title="แตะเพื่อสลับเข้าสนาม"><b>${i+1}</b>${chip(p)}<small>${p.games} เกม</small></li>`).join('')}</ol>`:'<p class="empty-note">ไม่มีคนรอ</p>'}</div>`}).join('')}</div>
+  <p class="sub" style="margin-top:10px">กรอบเหลือง = ใกล้ได้ลงสนาม · ${pickOf()==='equal'?'เรียงคนที่เล่นน้อยก่อน':'เรียงตามเวลาที่รอ'}</p></section>`}
 function vPlayers(){const ps=S.players,b=busy(),nA=ps.filter(p=>p.g==='A'&&p.active).length,nB=ps.filter(p=>p.g==='B'&&p.active).length,ex=nA>nB?'A':'B';
   return `<section class="band"><h1>ผู้เล่น</h1><p class="sub">มาเล่น: กลุ่ม A ${nA} คน · กลุ่ม B ${nB} คน${nA!==nB?` — ${ex} มากกว่า ${Math.abs(nA-nB)} คน ${Math.abs(nA-nB)>=4?`จึงจัด ${ex}${ex} vs ${ex}${ex} ได้`:`(ต้องต่างกันตั้งแต่ 4 คน จึงจะจัด ${ex}${ex} vs ${ex}${ex})`}`:''}</p>
   <form id="addf" class="card add"><input id="nm" placeholder="ชื่อ (หลายคนคั่นด้วย , )" autocomplete="off" aria-label="ชื่อผู้เล่น"><div class="seg">${['A','B'].map(g=>`<button type="button" class="${addG===g?'on':''}" data-act="addg" data-g="${g}">กลุ่ม ${g}</button>`).join('')}</div><button class="btn">เพิ่ม</button></form>
@@ -429,7 +468,7 @@ function openSummary(){calcTop();const st=standings(),pm=S.settings.scoreMode===
   <p class="sub" style="margin-top:12px">กด “บันทึกและเริ่มวันใหม่” แล้ว${st.on?'คะแนนจะถูกรวมเข้าคะแนนสะสม ':''}สกอร์วันนี้จะถูกล้าง รายชื่อยังอยู่ ผลจะเก็บไว้ใน “การแข่งขันที่ผ่านมา”</p>
   <div class="row" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end"><button class="btn ghost" data-act="sumclose">กลับ</button><button class="btn ghost" data-act="copy">คัดลอกสรุป</button><button class="btn" data-act="sumsave">บันทึกและเริ่มวันใหม่</button></div>`;
   $('#sum').classList.add('show')}
-function resetDay(){S.players.forEach(x=>Object.assign(x,{games:0,wins:0,ws:0,lp:null,lo:[],par:{},opp:{}}));S.courts.forEach(c=>{clearC(c);c.sh=0});S.history=[];S.shTotal=0}
+function resetDay(){S.players.forEach(x=>Object.assign(x,{games:0,wins:0,ws:0,lp:null,lo:[],par:{},opp:{}}));S.courts.forEach(c=>{clearC(c);c.sh=0;c.gs=0});S.history=[];S.shTotal=0}
 function saveDay(){snap();const st=standings();
   S.sessions.unshift({date:new Date().toLocaleDateString('th-TH',{dateStyle:'medium'}),mode:st.on?'points':'plain',games:S.history.length,sh:S.shTotal||0,
     rows:[...st.rows.map(o=>({n:o.p.name,g:o.p.g,w:o.p.wins,gm:o.p.games,rank:o.rank,pt:o.pt})),...st.low.map(p=>({n:p.name,g:p.g,w:p.wins,gm:p.games,rank:null,pt:null}))],grp:gName()});
@@ -441,8 +480,9 @@ function vSettings(){const s=S.settings,pm=s.scoreMode==='points';
   return `<section class="band"><h1>ตั้งค่า</h1><p class="sub">แตะหัวข้อเพื่อเปิดดู · ปรับได้ระหว่างเล่น มีผลตั้งแต่เกมถัดไป</p><div class="set">
   <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span><b>คู่มือการใช้งาน</b><br><small style="color:var(--mut)">ภาพประกอบทุกขั้นตอน ตั้งแต่ติดตั้งถึงแชร์ให้เพื่อนดู</small></span><button class="btn" data-act="help">เปิดคู่มือ</button></div>
   ${acctCard()}
-  <details class="card sect" data-sec="match" ${OPEN.match?'open':''}><summary><span><b>การจับคู่</b><small>${s.mode==='king'?'ชนะ 2 เกมออก':'เล่น 1 เกม ออกทั้งคู่'} · ${s.courts} สนาม</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
-  <div class="opt"><button class="${s.mode==='king'?'on':''}" data-act="mode" data-m="king"><b>ชนะ 2 เกมออก</b><span>ผู้แพ้ออก ผู้ชนะอยู่ต่อ ชนะติด 2 เกมออกทั้ง 2 คู่</span></button><button class="${s.mode==='one'?'on':''}" data-act="mode" data-m="one"><b>เล่น 1 เกม ออกทั้งคู่</b><span>จบเกมแล้วทั้ง 4 คนกลับเข้าคิว</span></button></div>
+  <details class="card sect" data-sec="match" ${OPEN.match?'open':''}><summary><span><b>การจับคู่</b><small>${modeName()} · ${s.courts} สนาม</small></span><svg class="chev" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sbody">
+  <p class="optl">1. วิธีออกจากสนาม</p><div class="opt">${Object.entries(MODES).map(([k,[n,d]])=>`<button class="${s.mode===k?'on':''}" data-act="mode" data-m="${k}"><b>${n}</b><span>${d}</span></button>`).join('')}</div>
+  <p class="optl">2. เลือกคนลงสนามจากคิว</p><div class="opt pickopt">${Object.entries(PICKS).map(([k,[n,d]])=>`<button class="${pickOf()===k?'on':''}" data-act="pick" data-m="${k}"><b>${n}</b><span>${d}</span></button>`).join('')}</div>
   <div class="card step"><span>เตือนเมื่อเล่นนานเกิน (นาที)<br><small style="color:var(--mut)">ตัวจับเวลาบนสนามเปลี่ยนเป็นสีส้ม · 0 = ไม่เตือน</small></span><div><button class="round" data-act="tw" data-d="-5" aria-label="ลด">−</button><output>${s.timeWarn}</output><button class="round" data-act="tw" data-d="5" aria-label="เพิ่ม">+</button></div></div>
   <div class="card step"><span>จำนวนสนาม</span><div><button class="round" data-act="ct" data-d="-1" aria-label="ลด">−</button><output>${s.courts}</output><button class="round" data-act="ct" data-d="1" aria-label="เพิ่ม">+</button></div></div>
   <div class="card step"><span>ถ่วงฝีมือจาก % ชนะ<br><small style="color:var(--mut)">ไม่ให้คนเก่งจับคู่กันจนชนะยาว</small></span><button class="sw ${s.balance?'on':''}" data-act="bal" aria-label="ถ่วงฝีมือ" aria-pressed="${s.balance}"></button></div>
@@ -501,8 +541,12 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act],[data
   else if(a==='cancel')ask(`ยกเลิกเกมสนาม ${S.courts[ci].no}? ไม่บันทึกผล`,'ยกเลิกเกม',()=>cancelGame(ci));
   else if(a==='treset'){const c=S.courts[ci];ask(`สนาม ${c.no}: เริ่มจับเวลาใหม่จาก 00:00?`,'เริ่มใหม่',()=>{c.start=Date.now();commit()})}
   else if(a==='shp'){snap();const c=S.courts[ci];c.sh=(c.sh||0)+1;S.shTotal=(S.shTotal||0)+1;commit();toast(`สนาม ${c.no}: ลูกแบด ${c.sh} ลูก (วันนี้ ${S.shTotal})`)}
-  else if(a==='shm'){const c=S.courts[ci];if(!(c.sh>0))return;snap();c.sh--;S.shTotal=Math.max(0,(S.shTotal||0)-1);commit()}
+  else if(a==='shm'){const c=S.courts[ci];if(!(c.sh>0))return;snap();c.sh--;if((c.gs||0)>c.sh)c.gs=c.sh;S.shTotal=Math.max(0,(S.shTotal||0)-1);commit()}
   else if(a==='fill'){snap();fill(S.courts[ci]);commit()}
+  else if(a==='rnd')randomize(ci);
+  else if(a==='lock')toggleLock(+t.dataset.id)
+  else if(a==='swapq')swapAsk(+t.dataset.id)
+  else if(a==='swapdo')swapDo(+t.dataset.a,+t.dataset.b)
   else if(a==='addg'){addG=t.dataset.g;document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.g===addG))}
   else if(a==='sortg'){snap();S.players=S.players.map((x,i)=>[x,i]).sort((x,y)=>x[0].g.localeCompare(y[0].g)||x[1]-y[1]).map(x=>x[0]);commit();toast('เรียงกลุ่ม A ก่อน แล้วตามด้วย B')}
   else if(a==='ren'&&p){editId=id;render();const i=$('#ren');if(i){i.focus();i.select()}}
@@ -510,6 +554,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act],[data
   else if(a==='grp'&&p){snap();p.g=p.g==='A'?'B':'A';commit()}
   else if(a==='act'&&p){snap();p.active=!p.active;if(p.active)p.q=S.clock++;commit()}
   else if(a==='del'&&p)ask(`ลบ ${p.name}? ถ้าอยู่ในสนาม เกมนั้นจะถูกยกเลิก`,'ลบ',()=>{snap();S.courts.forEach(c=>{if(c.t1&&[...c.t1,...c.t2].includes(id)){const ids=[...c.t1,...c.t2].filter(x=>x!==id);clearC(c);front(ids)}});S.players=S.players.filter(x=>x.id!==id);commit()});
+  else if(a==='pick'){s.pick=t.dataset.m;commit()}
   else if(a==='mode'){s.mode=t.dataset.m;S.courts.forEach(c=>{c.stay=null;c.streak=0});commit()}
   else if(a==='ct'){snap();s.courts=Math.min(12,Math.max(1,s.courts+ +t.dataset.d));syncCourts();commit()}
   else if(a==='tw'){s.timeWarn=Math.min(60,Math.max(0,s.timeWarn+ +t.dataset.d));commit()}
@@ -653,7 +698,7 @@ function helpHTML(){const D=demoS();
   const court=withD(D,()=>gclean(courtHTML(D.courts[0],0)));
   const queueH=withD(D,()=>gpick(vCourts(),'.qcols'));
   const players=withD(D,()=>{const d=document.createElement('div');d.innerHTML=vPlayers();d.querySelectorAll('.plist li').forEach((li,i)=>{if(i>1)li.remove()});d.querySelectorAll('.band>h1,.band>.sub').forEach(x=>x.remove());return gpick(d.innerHTML,'.band')});
-  const match=withD(D,()=>{const d=document.createElement('div');d.innerHTML=vSettings();const s=d.querySelector('[data-sec=match] .opt');return s?gclean(s.outerHTML):''});
+  const match=withD(D,()=>{const d=document.createElement('div');d.innerHTML=vSettings();const s=d.querySelector('[data-sec=match] .sbody');if(!s)return '';const k=document.createElement('div');s.querySelectorAll('.optl,.opt').forEach(x=>k.append(x.cloneNode(true)));return gclean(k.innerHTML)});
   const score=withD(D,()=>gpick(vScore(),'.scroll'));
   const groups=`<div class="card" style="max-width:none"><h2 style="margin:0 0 4px;font-size:20px">ก๊วน</h2><ul class="glist"><li class="cur"><button class="gopen"><b>ก๊วนหลัก</b><small>12 คน · ใช้อยู่</small></button><span class="acts"><button class="mini">แก้ชื่อ</button></span></li></ul><form class="add" style="margin-top:12px"><input value="ก๊วนวันพุธ"><button class="btn">สร้างก๊วน</button></form></div>`;
   const acct=`<div class="card" style="max-width:none"><b>บัญชี (ไม่บังคับ)</b><form class="afm"><input placeholder="ID (a-z 0-9 . _ -)"><input placeholder="รหัสผ่าน (6 ตัวขึ้นไป)"><div><button class="btn">เข้าสู่ระบบ</button><button class="btn ghost" type="button">สมัคร ID ใหม่</button></div></form></div>`;
@@ -676,13 +721,14 @@ ${gx(acct,[['.afm input',1],['.afm input+input',2],['.afm .ghost',3]])}
 ${gx(players,[['.seg',1],['.add input',2],['.add>.btn',3],['.plist .acts',4]])}
 <ol><li>เลือกกลุ่ม A หรือ B</li><li>พิมพ์ชื่อ ต้องการเพิ่มทีเดียวให้ใส่ <code>,</code> แล้วพิมพ์ชื่อต่อ</li><li>กด <b>เพิ่ม</b></li><li>แก้ชื่อ · ย้ายกลุ่ม · <b>พัก</b> (คนที่ไม่มาวันนี้ ไม่ต้องลบ) · ลบ</li></ol>
 <h3>4. ตั้งค่าการจับคู่</h3><p class="lead">ตั้งค่า > การจับคู่ · ปรับได้ระหว่างเล่น มีผลเกมถัดไป</p>
-${gx(match,[['.opt button',1],['.opt button+button',2]])}
-<ol><li><b>ชนะ 2 เกมออก</b> ผู้แพ้ออก ผู้ชนะอยู่ต่อ ชนะติด 2 เกมออกทั้งคู่</li><li><b>เล่น 1 เกม</b> ออกทั้ง 4 คน</li></ol><p>สนามได้สูงสุด 12 สนาม · จัด AA vs AA / BB vs BB ให้เองเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ 4 คน</p>
+${gx(match,[['.opt button',1],['.opt button+button',2],['.pickopt button',3],['.pickopt button+button',4]])}
+<p><b>ขั้น 1 วิธีออกจากสนาม</b></p><ol><li><b>ชนะ 2 เกมออก</b> ผู้แพ้ออก ผู้ชนะอยู่ต่อ ชนะติด 2 เกมออกทั้งคู่</li><li><b>เล่น 1 เกม</b> ออกทั้ง 4 คน</li></ol>
+<p><b>ขั้น 2 เลือกคนลงสนามจากคิว</b> (ใช้ร่วมกับขั้น 1 ได้ทุกแบบ)</p><ol start="3"><li><b>ทุกคนได้เล่นเท่ากัน</b> คนที่เล่นน้อยที่สุดได้ลงก่อน</li><li><b>ต่อคิว</b> คนที่ออกไปต่อท้ายคิว ฝั่งแพ้ต่อก่อนฝั่งชนะ ลงตามลำดับคิว</li></ol><p>สนามได้สูงสุด 12 สนาม · จัด AA vs AA / BB vs BB ให้เองเมื่อกลุ่มหนึ่งมากกว่าอีกกลุ่มตั้งแต่ 4 คน</p>
 <h3>5. คุมสนาม</h3>
-${gx(court,[['.side',1],['.timer',2],['.shp',3],['header .link',4]])}
-<ol><li><b>แตะฝั่งที่ชนะ</b> แอปจัดคู่ถัดไปลงสนามให้เอง</li><li>ตัวจับเวลา แตะเพื่อเริ่มนับใหม่</li><li>เปิดลูกแบดใหม่กด <b>+ ลูกแบด</b></li><li>ยกเลิกเกมโดยไม่บันทึกผล</li></ol>
+${gx(court,[['.side',1],['.timer',2],['.shp',3],['header .link+.link',4],['.lk',5],['.rndl',6]])}
+<ol><li><b>แตะฝั่งที่ชนะ</b> แอปจัดคู่ถัดไปลงสนามให้เอง</li><li>ตัวจับเวลา แตะเพื่อเริ่มนับใหม่</li><li>เปิดลูกแบดใหม่กด <b>+ ลูกแบด</b> ตัวเลขสะสมทั้งวัน กลับเป็น 0 เมื่อกดจบการแข่งขัน</li><li>ยกเลิกเกมโดยไม่บันทึกผล</li><li><b>ล็อค</b> แตะรูปกุญแจข้างชื่อ คนนั้นจะอยู่สนามต่อ จบเกมไม่ต้องออก แตะอีกครั้งเพื่อปลด</li><li><b>สุ่ม</b> สุ่มคนลงสนามใหม่ไม่สนลำดับคิว คนที่ล็อคไว้อยู่ต่อ (สนามว่างกด <b>สุ่มลงสนาม</b>)</li></ol>
 <p>แตะฝั่งที่ชนะแล้วกดยืนยัน <b>บันทึกผล</b></p>${gx(confirmH,[['.row .btn:not(.ghost)',1]])}
-<p>คิวรออยู่ใต้สนาม กรอบเหลือง = ใกล้ได้ลงสนาม</p>${gx(queueH)}
+<p>คิวรออยู่ใต้สนาม กรอบเหลือง = ใกล้ได้ลงสนาม · <b>แตะชื่อในคิว</b> เพื่อสลับคนนั้นเข้าสนามแทนคนกลุ่มเดียวกัน</p>${gx(queueH)}
 <h3>6. สกอร์และจบการแข่งขัน</h3>
 ${gx(topH,[['.endb',1],['.btn.icon+.btn.icon',2]])}
 <ol><li>จบวันกด <b>จบการแข่งขัน</b> ผลเก็บเข้าประวัติ คะแนนรวมเข้าคะแนนสะสม แล้วเริ่มวันใหม่</li><li>กดผิด กดย้อนกลับ</li></ol>
